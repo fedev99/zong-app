@@ -1,0 +1,24 @@
+{
+"name": "ZONG - Il Gioco dei Dadi Online",
+"short_name": "ZONG",
+"start_url": ".",
+"display": "fullscreen",
+"background_color": "#060709",
+"theme_color": "#060709",
+"orientation": "portrait",
+"description": "Un entusiasmante gioco di dadi multiplayer online da giocare con i tuoi amici.",
+"icons": [
+{
+"src": "icon-192.png",
+"sizes": "192x192",
+"type": "image/png",
+"purpose": "any maskable"
+},
+{
+"src": "icon.svg",
+"sizes": "512x512",
+"type": "image/png",
+"purpose": "any maskable"
+}
+]
+}
