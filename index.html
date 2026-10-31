@@ -1998,7 +1998,8 @@
         let response = await supabaseClient.from('rooms').select('*').eq('code', roomCode).maybeSingle();
 
         if (response.error) {
-          alert("Errore durante la connessione alla stanza. Riprova.");
+          console.error("Errore lettura stanza:", response.error);
+          alert(`Errore durante la connessione alla stanza: ${response.error.message}`);
           return false;
         }
 
@@ -2023,58 +2024,85 @@
           
           let insertRes = await supabaseClient.from('rooms').insert([{ code: roomCode, state: GameState }]);
           if (insertRes.error) {
-            alert("Errore durante la creazione della stanza. Riprova.");
+            console.error("Errore creazione stanza:", insertRes.error);
+            alert(`Errore durante la creazione della stanza: ${insertRes.error.message}`);
             return false;
           }
         } else {
+          if (!data.state || typeof data.state !== 'object') {
+            throw new Error("La stanza non contiene uno stato di gioco valido.");
+          }
           Object.assign(GameState, data.state);
           TARGET_SCORE = GameState.targetScore || 10000;
+          GameState.numPlayers = Number.isInteger(Number(GameState.numPlayers)) ? Number(GameState.numPlayers) : 0;
+          GameState.playerIds = GameState.playerIds || {};
+          GameState.playerNames = GameState.playerNames || {};
+          GameState.scores = GameState.scores || {};
+          GameState.records = GameState.records || {};
+          GameState.inheritedRecords = GameState.inheritedRecords || {};
+          GameState.hasEntered = GameState.hasEntered || {};
+          GameState.zongCounts = GameState.zongCounts || {};
+          GameState.totalRolls = GameState.totalRolls || {};
           if (!GameState.chatLogs) GameState.chatLogs = [];
-          if (!GameState.inheritedRecords) GameState.inheritedRecords = {};
           
           let existingPlayerIndex = -1;
 
           for (let i = 1; i <= GameState.numPlayers; i++) {
-            if (GameState.playerIds[i] === myPlayerId || GameState.playerNames[i].toLowerCase() === name.toLowerCase()) {
+            if (GameState.playerIds[i] === myPlayerId) {
               existingPlayerIndex = i;
               break;
             }
           }
 
-          if (existingPlayerIndex !== -1) {
-            if (isPageReload) {
-              myPlayerId = GameState.playerIds[existingPlayerIndex];
-              GameState.playerNames[existingPlayerIndex] = name;
-              setCookie("zong_my_player_id", myPlayerId);
-              localStorage.setItem("zong_my_player_id", myPlayerId);
-              await supabaseClient.from('rooms').update({ state: GameState }).eq('code', roomCode);
-            } else {
-              const confirmReentry = confirm("C'è un giocatore con lo stesso nome. Vuoi entrare con quel punteggio?");
-              if (confirmReentry) {
-                myPlayerId = GameState.playerIds[existingPlayerIndex];
-                GameState.playerNames[existingPlayerIndex] = name;
-                setCookie("zong_my_player_id", myPlayerId);
-                localStorage.setItem("zong_my_player_id", myPlayerId);
-                await supabaseClient.from('rooms').update({ state: GameState }).eq('code', roomCode);
-              } else {
-                return false;
+          if (existingPlayerIndex === -1) {
+            const normalizedName = name.trim().toLowerCase();
+            for (let i = 1; i <= GameState.numPlayers; i++) {
+              const existingName = GameState.playerNames[i];
+              if (typeof existingName === 'string' && existingName.trim().toLowerCase() === normalizedName) {
+                existingPlayerIndex = i;
+                break;
               }
             }
+          }
+
+          const saveRoomState = async () => {
+            const { error } = await supabaseClient
+              .from('rooms')
+              .update({ state: GameState })
+              .eq('code', roomCode);
+            if (error) throw error;
+          };
+
+          if (existingPlayerIndex !== -1) {
+            const playerIdMissing = !GameState.playerIds[existingPlayerIndex];
+            const playerId = GameState.playerIds[existingPlayerIndex] || myPlayerId;
+            const nameChanged = GameState.playerNames[existingPlayerIndex] !== name;
+            GameState.playerIds[existingPlayerIndex] = playerId;
+
+            if (!isPageReload && playerId !== myPlayerId) {
+              const confirmReentry = confirm("C'è un giocatore con lo stesso nome. Vuoi entrare con quel punteggio?");
+              if (!confirmReentry) return false;
+            }
+
+            GameState.playerNames[existingPlayerIndex] = name;
+            if (nameChanged || playerIdMissing) {
+              await saveRoomState();
+            }
+
+            myPlayerId = playerId;
+            setCookie("zong_my_player_id", myPlayerId);
+            localStorage.setItem("zong_my_player_id", myPlayerId);
           } else {
             GameState.numPlayers++;
             GameState.playerIds[GameState.numPlayers] = myPlayerId;
             GameState.playerNames[GameState.numPlayers] = name;
             GameState.scores[GameState.numPlayers] = 0;
-            if (!GameState.records) GameState.records = {};
             GameState.records[GameState.numPlayers] = 0;
-            if (!GameState.inheritedRecords) GameState.inheritedRecords = {};
             GameState.inheritedRecords[GameState.numPlayers] = 0;
             GameState.hasEntered[GameState.numPlayers] = false;
-            if (!GameState.zongCounts) GameState.zongCounts = {};
             GameState.zongCounts[GameState.numPlayers] = 0;
-            if (!GameState.totalRolls) GameState.totalRolls = {};
             GameState.totalRolls[GameState.numPlayers] = 0;
-            await supabaseClient.from('rooms').update({ state: GameState }).eq('code', roomCode);
+            await saveRoomState();
           }
         }
 
@@ -2124,8 +2152,9 @@
         updateUI();
         return true;
       } catch (err) {
-        console.error(err);
-        alert("Errore durante la connessione alla stanza. Riprova.");
+        console.error("Errore durante l'accesso alla stanza:", err);
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        alert(`Errore durante l'accesso alla stanza: ${errorMessage}`);
         return false;
       }
     }
