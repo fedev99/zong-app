@@ -24,9 +24,9 @@
   ],
   "screenshots": [
     {
-      "src": "Screenshot.jpg",
+      "src": "Screenshot.png",
       "sizes": "1280x720",
-      "type": "image/jpg",
+      "type": "image/png",
       "platform": "wide"
     }
   ]
