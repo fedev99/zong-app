@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="manifest.json">
-  <title>ZONG - Il Gioco dei Dadi Online</title>
+  <title>ZONG - Gioco di Dadi</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Google Fonts: Inter & Outfit -->
@@ -197,6 +197,15 @@
         <div>
           <label class="text-[10px] uppercase font-bold text-zinc-400 block mb-1">Codice Stanza</label>
           <input id="inputRoomCode" type="text" placeholder="Es. tavolo123" class="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-2 text-white font-semibold text-sm focus:outline-none focus:border-red-400" />
+        </div>
+        <div>
+          <label class="text-[10px] uppercase font-bold text-zinc-400 block mb-1">Modalità di gioco</label>
+          <div class="grid grid-cols-2 gap-2">
+            <button id="btnModeNormal" type="button" data-room-mode="normal" aria-pressed="true" class="py-2 rounded-xl border border-red-400 bg-red-500/15 text-red-200 text-xs font-bold transition">Normale</button>
+            <button id="btnModeScales" type="button" data-room-mode="with-scales" aria-pressed="false" class="py-2 rounded-xl border border-zinc-700 bg-zinc-950 text-zinc-400 text-xs font-bold transition">Con scale</button>
+          </div>
+          <p class="mt-1 text-[10px] text-zinc-500">Con scale: 3 dadi = 800 pt · 4 dadi = 1.000 pt</p>
+          <p id="roomModeNotice" class="hidden mt-1 text-[10px] text-amber-300"></p>
         </div>
         <div id="containerTargetScore" class="hidden">
           <label class="text-[10px] uppercase font-bold text-red-400 block mb-1">Punteggio Massimo Stanza</label>
@@ -562,6 +571,7 @@
         <p>• <strong>Tris:</strong> Tris di 1 = 1000 pt, Tris da 2 a 6 = valore x 100 pt</p>
         <p>• <strong>Quaterna:</strong> 2x Tris | <strong>Cinquina:</strong> 4x Tris</p>
         <p>• <strong>Scala (1-5 o 2-6):</strong> 1500 pt</p>
+        <p id="scaleModeRules" class="hidden">• <strong>Modalità Con scale:</strong> la scala da 3 dadi vale 800 pt e quella da 4 dadi 1000 pt. Gli 1 e i 5 che fanno parte della scala sono conteggiati anche come dadi singoli: (1,2,3) = 700 + 100 = 800 pt; (2,3,4,5) = 900 + 50 = 950 pt. Se il lancio contiene una scala da 3 o 4 dadi e anche un tris sovrapposto alla scala, i punteggi si sommano (scala + tris). Gli ulteriori 1 e 5 selezionati si sommano normalmente. La scala da 5 dadi vale 1500 pt.</p>
         <p>• <strong>Apertura:</strong> Minimo 500 pt in un turno per registrare punti sul tabellone.</p>
         <p>• <strong>✨ Sei Magico:</strong> Se resta 1 solo dado ed esce 6, non perdi con Zong! Guadagni 0 pt ma sblocchi l'Hot Dice rilanciando tutti i 5 dadi.</p>
         <p>• <strong>✂️ Due Cinque:</strong> Uniscili per accantonare solo un 5 guadagnando 100 pt e tenendo l'altro libero per il tiro successivo.</p>
@@ -868,6 +878,7 @@
     let TARGET_SCORE = 10000;
     const GameState = {
       targetScore: 10000,
+      mode: 'normal',
       numPlayers: 1, 
       activePlayer: 1, 
       playerIds: {},   
@@ -953,6 +964,99 @@
       return counts;
     }
 
+    function hasStraightCombination(values) {
+      const lengths = GameState.mode === 'with-scales' ? [3, 4, 5] : [5];
+      return lengths.some(length => {
+        if (values.length < length) return false;
+        for (let start = 1; start <= 7 - length; start++) {
+          const sequence = Array.from({ length }, (_, index) => start + index);
+          if (sequence.every(value => values.includes(value))) return true;
+        }
+        return false;
+      });
+    }
+
+    function evaluateScaleSelection(selectedValues) {
+      const lengths = GameState.mode === 'with-scales' ? [5, 4, 3] : [5];
+      let bestResult = null;
+
+      for (const length of lengths) {
+        if (selectedValues.length < length) continue;
+
+        for (let start = 1; start <= 7 - length; start++) {
+          const sequence = Array.from({ length }, (_, index) => start + index);
+          const remainingValues = [...selectedValues];
+          const containsSequence = sequence.every(value => {
+            const index = remainingValues.indexOf(value);
+            if (index === -1) return false;
+            remainingValues.splice(index, 1);
+            return true;
+          });
+          if (!containsSequence || remainingValues.some(value => value !== 1 && value !== 5)) continue;
+
+          const scaleScore = length === 3 ? 800 : length === 4 ? 1000 : 1500;
+          const scaleScoringDice = length < 5
+            ? sequence.filter(value => value === 1 || value === 5).length
+            : 0;
+          const adjustedScaleScore = scaleScore - scaleScoringDice * 100;
+          const onesScore = length < 5 ? selectedValues.filter(value => value === 1).length * 100 : 0;
+          const fivesScore = length < 5 ? selectedValues.filter(value => value === 5).length * 50 : 0;
+          const score = adjustedScaleScore + onesScore + fivesScore;
+          if (bestResult && score <= bestResult.score) continue;
+
+          const reasons = [length === 5
+            ? `Scala (${scaleScore} pt)`
+            : `Scala da ${length} dadi (${adjustedScaleScore} pt)`];
+          if (onesScore > 0) reasons.push(`${onesScore / 100}x Uno (${onesScore} pt)`);
+          if (fivesScore > 0) reasons.push(`${fivesScore / 50}x Cinque (${fivesScore} pt)`);
+          bestResult = { score, isValid: true, description: reasons.join(" + ") };
+        }
+
+        if (GameState.mode !== 'with-scales' || length === 5) continue;
+
+        for (let start = 1; start <= 7 - length; start++) {
+          const sequence = Array.from({ length }, (_, index) => start + index);
+          const requiredCounts = getCounts(sequence);
+
+          for (let tripValue = 1; tripValue <= 6; tripValue++) {
+            if (!sequence.includes(tripValue) || selectedValues.filter(value => value === tripValue).length < 3) continue;
+
+            requiredCounts[tripValue] = 3;
+            const remainingCounts = getCounts(selectedValues);
+            if (Object.keys(requiredCounts).some(value => remainingCounts[value] < requiredCounts[value])) {
+              requiredCounts[tripValue] = 1;
+              continue;
+            }
+
+            const extraValues = [...selectedValues];
+            Object.keys(requiredCounts).forEach(value => {
+              for (let count = 0; count < requiredCounts[value]; count++) {
+                extraValues.splice(extraValues.indexOf(Number(value)), 1);
+              }
+            });
+            requiredCounts[tripValue] = 1;
+            if (extraValues.some(value => value !== 1 && value !== 5)) continue;
+
+            const scaleScore = length === 3 ? 800 : 1000;
+            const tripScore = tripValue === 1 ? 1000 : tripValue * 100;
+            const extraScore = extraValues.filter(value => value === 1).length * 100
+              + extraValues.filter(value => value === 5).length * 50;
+            const score = scaleScore + tripScore + extraScore;
+            if (bestResult && score <= bestResult.score) continue;
+
+            const reasons = [
+              `Scala da ${length} dadi (${scaleScore} pt)`,
+              `Tris di ${tripValue} (${tripScore} pt)`
+            ];
+            if (extraScore > 0) reasons.push(`Singoli aggiuntivi (${extraScore} pt)`);
+            bestResult = { score, isValid: true, description: reasons.join(" + ") };
+          }
+        }
+      }
+
+      return bestResult;
+    }
+
     function evaluateSelection(selectedValues) {
       if (!selectedValues || selectedValues.length === 0) return { score: 0, isValid: false, description: "" };
 
@@ -967,12 +1071,8 @@
         return { score: 0, isValid: true, description: "✨ Sei Magico! (Salvezza Zong)", isMagicSix: true };
       }
 
-      if (totalDice === 5) {
-        const sorted = [...selectedValues].sort((a,b)=>a-b).join('');
-        if (sorted === "12345" || sorted === "23456") {
-          return { score: 1500, isValid: true, description: "Scala (1500 pt)" };
-        }
-      }
+      const scaleResult = evaluateScaleSelection(selectedValues);
+      if (scaleResult) return scaleResult;
 
       for (let num = 1; num <= 6; num++) {
         if (counts[num] === 5) {
@@ -1031,10 +1131,7 @@
       const counts = getCounts(availableValues);
       if (counts[1] > 0 || counts[5] > 0) return true;
       for (let n = 2; n <= 6; n++) { if (counts[n] >= 3) return true; }
-      if (availableValues.length === 5) {
-        const sorted = [...availableValues].sort((a,b)=>a-b).join('');
-        if (sorted === "12345" || sorted === "23456") return true;
-      }
+      if (hasStraightCombination(availableValues)) return true;
       return false;
     }
 
@@ -1061,6 +1158,7 @@
     const btnGotItRules = document.getElementById('btnGotItRules');
     const btnCloseRules = document.getElementById('btnCloseRules');
     const rulesModal = document.getElementById('rulesModal');
+    const scaleModeRules = document.getElementById('scaleModeRules');
     const btnLeaderboard = document.getElementById('btnLeaderboard');
     const btnCloseLeaderboard = document.getElementById('btnCloseLeaderboard');
     const leaderboardModal = document.getElementById('leaderboardModal');
@@ -1092,6 +1190,8 @@
     const inputPlayerName = document.getElementById('inputPlayerName');
     const inputRoomCode = document.getElementById('inputRoomCode');
     const btnJoinRoom = document.getElementById('btnJoinRoom');
+    const roomModeButtons = document.querySelectorAll('[data-room-mode]');
+    const roomModeNotice = document.getElementById('roomModeNotice');
     const roomBadge = document.getElementById('roomBadge');
     const containerTargetScore = document.getElementById('containerTargetScore');
     const inputTargetScore = document.getElementById('inputTargetScore');
@@ -1118,6 +1218,33 @@
     const chatLogContainer = document.getElementById('chatLogContainer');
     const chatForm = document.getElementById('chatForm');
     const chatInput = document.getElementById('chatInput');
+    let selectedRoomMode = 'normal';
+
+    function setRoomMode(mode) {
+      selectedRoomMode = mode === 'with-scales' ? 'with-scales' : 'normal';
+      roomModeButtons.forEach(button => {
+        const isSelected = button.dataset.roomMode === selectedRoomMode;
+        button.setAttribute('aria-pressed', String(isSelected));
+        button.classList.toggle('border-red-400', isSelected);
+        button.classList.toggle('bg-red-500/15', isSelected);
+        button.classList.toggle('text-red-200', isSelected);
+        button.classList.toggle('border-zinc-700', !isSelected);
+        button.classList.toggle('bg-zinc-950', !isSelected);
+        button.classList.toggle('text-zinc-400', !isSelected);
+      });
+    }
+
+    function setRoomModeButtonsDisabled(disabled) {
+      roomModeButtons.forEach(button => {
+        button.disabled = disabled;
+        button.classList.toggle('opacity-50', disabled);
+        button.classList.toggle('cursor-not-allowed', disabled);
+      });
+    }
+
+    roomModeButtons.forEach(button => {
+      button.addEventListener('click', () => setRoomMode(button.dataset.roomMode));
+    });
 
     function checkRoomExists(code) {
       return supabaseClient.from('rooms').select('*').eq('code', code).maybeSingle();
@@ -1128,17 +1255,31 @@
         const code = inputRoomCode.value.trim();
         if (!code) {
           containerTargetScore.classList.add('hidden');
+          roomModeNotice.classList.add('hidden');
+          setRoomModeButtonsDisabled(false);
           return;
         }
         try {
-          const { data } = await checkRoomExists(code);
+          const { data, error } = await checkRoomExists(code);
+          if (inputRoomCode.value.trim() !== code) return;
+          if (error) throw error;
           if (!data) {
             containerTargetScore.classList.remove('hidden');
+            roomModeNotice.classList.add('hidden');
+            setRoomModeButtonsDisabled(false);
           } else {
             containerTargetScore.classList.add('hidden');
+            const roomMode = data.state && data.state.mode === 'with-scales' ? 'with-scales' : 'normal';
+            setRoomMode(roomMode);
+            setRoomModeButtonsDisabled(true);
+            roomModeNotice.textContent = `Stanza esistente: modalità ${roomMode === 'with-scales' ? 'Con scale' : 'Normale'}.`;
+            roomModeNotice.classList.remove('hidden');
           }
-        } catch(e) {
+        } catch (error) {
+          console.error("Errore durante la verifica della stanza:", error);
           containerTargetScore.classList.add('hidden');
+          roomModeNotice.classList.add('hidden');
+          setRoomModeButtonsDisabled(false);
         }
       });
     }
@@ -1990,6 +2131,39 @@
       saveStateToCloud();
     }
 
+    function initializeNewRoomGame(name, targetScore, mode) {
+      Object.assign(GameState, {
+        targetScore,
+        mode,
+        numPlayers: 1,
+        activePlayer: 1,
+        playerIds: { 1: myPlayerId },
+        playerNames: { 1: name },
+        scores: { 1: 0 },
+        records: { 1: 0 },
+        inheritedRecords: { 1: 0 },
+        hasEntered: { 1: false },
+        zongCounts: { 1: 0 },
+        totalRolls: { 1: 0 },
+        round: 1,
+        phase: 'ready',
+        isInheritedTurn: false,
+        dice: [
+          { value: 1, status: 'free' },
+          { value: 2, status: 'free' },
+          { value: 3, status: 'free' },
+          { value: 4, status: 'free' },
+          { value: 5, status: 'free' },
+        ],
+        turnAccumulatedScore: 0,
+        inheritedScore: 0,
+        securedInSubTurn: false,
+        logs: [{ text: "Nuova partita avviata. Punteggio iniziale: 0. Benvenuto!", highlight: false, isZong: false }],
+        chatLogs: [],
+        lastEvent: null
+      });
+    }
+
     // GESTIONE ACCESSO E RIENTRO
     async function joinRoomProcess(name, code, targetScoreFromInput, isPageReload = false) {
       roomCode = code;
@@ -2007,20 +2181,8 @@
 
         if (!data) {
           const tScore = targetScoreFromInput || 10000;
-          GameState.targetScore = tScore;
+          initializeNewRoomGame(name, tScore, selectedRoomMode);
           TARGET_SCORE = tScore;
-          GameState.numPlayers = 1;
-          GameState.playerIds = { 1: myPlayerId };
-          GameState.playerNames = { 1: name };
-          GameState.scores = { 1: 0 };
-          GameState.records = { 1: 0 };
-          GameState.inheritedRecords = { 1: 0 };
-          GameState.hasEntered = { 1: false };
-          GameState.zongCounts = { 1: 0 };
-          GameState.totalRolls = { 1: 0 };
-          GameState.activePlayer = 1;
-          GameState.logs = [{ text: "Nuova stanza creata. Benvenuto!", highlight: false, isZong: false }];
-          GameState.chatLogs = [];
           
           let insertRes = await supabaseClient.from('rooms').insert([{ code: roomCode, state: GameState }]);
           if (insertRes.error) {
@@ -2033,6 +2195,9 @@
             throw new Error("La stanza non contiene uno stato di gioco valido.");
           }
           Object.assign(GameState, data.state);
+          GameState.mode = data.state.mode === 'with-scales' ? 'with-scales' : 'normal';
+          setRoomMode(GameState.mode);
+          setRoomModeButtonsDisabled(true);
           TARGET_SCORE = GameState.targetScore || 10000;
           GameState.numPlayers = Number.isInteger(Number(GameState.numPlayers)) ? Number(GameState.numPlayers) : 0;
           GameState.playerIds = GameState.playerIds || {};
@@ -2353,7 +2518,11 @@
 
       btnLeaderboard.addEventListener('click', () => { triggerHaptic(20); leaderboardModal.classList.remove('hidden'); });
       btnCloseLeaderboard.addEventListener('click', () => { triggerHaptic(20); leaderboardModal.classList.add('hidden'); });
-      btnRules.addEventListener('click', () => { triggerHaptic(20); rulesModal.classList.remove('hidden'); });
+      btnRules.addEventListener('click', () => {
+        triggerHaptic(20);
+        scaleModeRules.classList.toggle('hidden', GameState.mode !== 'with-scales');
+        rulesModal.classList.remove('hidden');
+      });
       btnCloseRules.addEventListener('click', () => { triggerHaptic(20); rulesModal.classList.add('hidden'); });
       btnGotItRules.addEventListener('click', () => { triggerHaptic(20); rulesModal.classList.add('hidden'); });
       btnRestartWin.addEventListener('click', () => { 
