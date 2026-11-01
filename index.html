@@ -571,7 +571,7 @@
         <p>• <strong>Tris:</strong> Tris di 1 = 1000 pt, Tris da 2 a 6 = valore x 100 pt</p>
         <p>• <strong>Quaterna:</strong> 2x Tris | <strong>Cinquina:</strong> 4x Tris</p>
         <p>• <strong>Scala (1-5 o 2-6):</strong> 1500 pt</p>
-        <p id="scaleModeRules" class="hidden">• <strong>Modalità Con scale:</strong> la scala da 3 dadi vale 800 pt e quella da 4 dadi 1000 pt. Gli 1 e i 5 che fanno parte della scala sono conteggiati anche come dadi singoli: (1,2,3) = 700 + 100 = 800 pt; (2,3,4,5) = 900 + 50 = 950 pt. Se il lancio contiene una scala da 3 o 4 dadi e anche un tris sovrapposto alla scala, i punteggi si sommano (scala + tris). Gli ulteriori 1 e 5 selezionati si sommano normalmente. La scala da 5 dadi vale 1500 pt.</p>
+        <p id="scaleModeRules" class="hidden">• <strong>Modalità Con scale:</strong> la scala da 3 dadi vale 800 pt e quella da 4 dadi 1000 pt. Le scale vengono calcolate nel punteggio quando il giocatore seleziona i dadi della scala validi con la possibilità di fare hot dice e ritirare tutti i dadi.</p>
         <p>• <strong>Apertura:</strong> Minimo 500 pt in un turno per registrare punti sul tabellone.</p>
         <p>• <strong>✨ Sei Magico:</strong> Se resta 1 solo dado ed esce 6, non perdi con Zong! Guadagni 0 pt ma sblocchi l'Hot Dice rilanciando tutti i 5 dadi.</p>
         <p>• <strong>✂️ Due Cinque:</strong> Uniscili per accantonare solo un 5 guadagnando 100 pt e tenendo l'altro libero per il tiro successivo.</p>
@@ -965,96 +965,34 @@
     }
 
     function hasStraightCombination(values) {
-      const lengths = GameState.mode === 'with-scales' ? [3, 4, 5] : [5];
-      return lengths.some(length => {
-        if (values.length < length) return false;
-        for (let start = 1; start <= 7 - length; start++) {
-          const sequence = Array.from({ length }, (_, index) => start + index);
-          if (sequence.every(value => values.includes(value))) return true;
-        }
-        return false;
-      });
-    }
-
-    function evaluateScaleSelection(selectedValues) {
-      const lengths = GameState.mode === 'with-scales' ? [5, 4, 3] : [5];
-      let bestResult = null;
-
-      for (const length of lengths) {
-        if (selectedValues.length < length) continue;
-
-        for (let start = 1; start <= 7 - length; start++) {
-          const sequence = Array.from({ length }, (_, index) => start + index);
-          const remainingValues = [...selectedValues];
-          const containsSequence = sequence.every(value => {
-            const index = remainingValues.indexOf(value);
-            if (index === -1) return false;
-            remainingValues.splice(index, 1);
-            return true;
-          });
-          if (!containsSequence || remainingValues.some(value => value !== 1 && value !== 5)) continue;
-
-          const scaleScore = length === 3 ? 800 : length === 4 ? 1000 : 1500;
-          const scaleScoringDice = length < 5
-            ? sequence.filter(value => value === 1 || value === 5).length
-            : 0;
-          const adjustedScaleScore = scaleScore - scaleScoringDice * 100;
-          const onesScore = length < 5 ? selectedValues.filter(value => value === 1).length * 100 : 0;
-          const fivesScore = length < 5 ? selectedValues.filter(value => value === 5).length * 50 : 0;
-          const score = adjustedScaleScore + onesScore + fivesScore;
-          if (bestResult && score <= bestResult.score) continue;
-
-          const reasons = [length === 5
-            ? `Scala (${scaleScore} pt)`
-            : `Scala da ${length} dadi (${adjustedScaleScore} pt)`];
-          if (onesScore > 0) reasons.push(`${onesScore / 100}x Uno (${onesScore} pt)`);
-          if (fivesScore > 0) reasons.push(`${fivesScore / 50}x Cinque (${fivesScore} pt)`);
-          bestResult = { score, isValid: true, description: reasons.join(" + ") };
-        }
-
-        if (GameState.mode !== 'with-scales' || length === 5) continue;
-
-        for (let start = 1; start <= 7 - length; start++) {
-          const sequence = Array.from({ length }, (_, index) => start + index);
-          const requiredCounts = getCounts(sequence);
-
-          for (let tripValue = 1; tripValue <= 6; tripValue++) {
-            if (!sequence.includes(tripValue) || selectedValues.filter(value => value === tripValue).length < 3) continue;
-
-            requiredCounts[tripValue] = 3;
-            const remainingCounts = getCounts(selectedValues);
-            if (Object.keys(requiredCounts).some(value => remainingCounts[value] < requiredCounts[value])) {
-              requiredCounts[tripValue] = 1;
-              continue;
-            }
-
-            const extraValues = [...selectedValues];
-            Object.keys(requiredCounts).forEach(value => {
-              for (let count = 0; count < requiredCounts[value]; count++) {
-                extraValues.splice(extraValues.indexOf(Number(value)), 1);
-              }
-            });
-            requiredCounts[tripValue] = 1;
-            if (extraValues.some(value => value !== 1 && value !== 5)) continue;
-
-            const scaleScore = length === 3 ? 800 : 1000;
-            const tripScore = tripValue === 1 ? 1000 : tripValue * 100;
-            const extraScore = extraValues.filter(value => value === 1).length * 100
-              + extraValues.filter(value => value === 5).length * 50;
-            const score = scaleScore + tripScore + extraScore;
-            if (bestResult && score <= bestResult.score) continue;
-
-            const reasons = [
-              `Scala da ${length} dadi (${scaleScore} pt)`,
-              `Tris di ${tripValue} (${tripScore} pt)`
-            ];
-            if (extraScore > 0) reasons.push(`Singoli aggiuntivi (${extraScore} pt)`);
-            bestResult = { score, isValid: true, description: reasons.join(" + ") };
+      if (GameState.mode === 'with-scales') {
+        if (values.length === 5) {
+          for (let start = 1; start <= 2; start++) {
+            const seq = Array.from({length: 5}, (_, i) => start + i);
+            if (seq.every(v => values.includes(v))) return true;
           }
         }
+        if (values.length === 4) {
+          for (let start = 1; start <= 3; start++) {
+            const seq = Array.from({length: 4}, (_, i) => start + i);
+            if (seq.every(v => values.includes(v))) return true;
+          }
+        }
+        if (values.length === 3) {
+          for (let start = 1; start <= 4; start++) {
+            const seq = Array.from({length: 3}, (_, i) => start + i);
+            if (seq.every(v => values.includes(v))) return true;
+          }
+        }
+        return false;
+      } else {
+        if (values.length < 5) return false;
+        for (let start = 1; start <= 2; start++) {
+          const seq = Array.from({length: 5}, (_, i) => start + i);
+          if (seq.every(v => values.includes(v))) return true;
+        }
+        return false;
       }
-
-      return bestResult;
     }
 
     function evaluateSelection(selectedValues) {
@@ -1067,12 +1005,51 @@
       const reasons = [];
 
       const bankedCount = GameState.dice.filter(d => d.status === 'banked').length;
+      const currentRollDiceCount = GameState.dice.filter(d => d.status !== 'banked').length;
       if (totalDice === 1 && selectedValues[0] === 6 && bankedCount === 4) {
         return { score: 0, isValid: true, description: "✨ Sei Magico! (Salvezza Zong)", isMagicSix: true };
       }
 
-      const scaleResult = evaluateScaleSelection(selectedValues);
-      if (scaleResult) return scaleResult;
+      // Regola Scala per la modalità "Con Scale"
+      if (GameState.mode === 'with-scales') {
+        // Scala da 5 dadi (1-5 o 2-6) = 1500 pt
+        if (currentRollDiceCount === 5 && totalDice === 5) {
+          for (let start = 1; start <= 2; start++) {
+            const seq = Array.from({length: 5}, (_, i) => start + i);
+            if (seq.every(v => selectedValues.includes(v))) {
+              return { score: 1500, isValid: true, description: "Scala (1500 pt)" };
+            }
+          }
+        }
+        // Scala da 4 dadi = 1000 pt fissi (eseguibile tirando esattamente 4 dadi e facendo scala con 4 dadi)
+        if (currentRollDiceCount === 4 && totalDice === 4) {
+          for (let start = 1; start <= 3; start++) {
+            const seq = Array.from({length: 4}, (_, i) => start + i);
+            if (seq.every(v => selectedValues.includes(v))) {
+              return { score: 1000, isValid: true, description: "Scala da 4 dadi (1000 pt)" };
+            }
+          }
+        }
+        // Scala da 3 dadi = 800 pt fissi (eseguibile tirando esattamente 3 dadi e facendo scala con 3 dadi)
+        if (currentRollDiceCount === 3 && totalDice === 3) {
+          for (let start = 1; start <= 4; start++) {
+            const seq = Array.from({length: 3}, (_, i) => start + i);
+            if (seq.every(v => selectedValues.includes(v))) {
+              return { score: 800, isValid: true, description: "Scala da 3 dadi (800 pt)" };
+            }
+          }
+        }
+      } else {
+        // Modalità normale (scala da 5 dadi)
+        if (totalDice === 5) {
+          for (let start = 1; start <= 2; start++) {
+            const seq = Array.from({length: 5}, (_, i) => start + i);
+            if (seq.every(v => selectedValues.includes(v))) {
+              return { score: 1500, isValid: true, description: "Scala (1500 pt)" };
+            }
+          }
+        }
+      }
 
       for (let num = 1; num <= 6; num++) {
         if (counts[num] === 5) {
