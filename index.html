@@ -205,11 +205,12 @@
         </div>
         <div>
           <label class="text-[10px] uppercase font-bold text-zinc-400 block mb-1">Modalità di gioco</label>
-          <div class="grid grid-cols-2 gap-2">
+          <div class="grid grid-cols-3 gap-2">
             <button id="btnModeNormal" type="button" data-room-mode="normal" aria-pressed="true" class="py-2 rounded-xl border border-red-400 bg-red-500/15 text-red-200 text-xs font-bold transition">Normale</button>
             <button id="btnModeScales" type="button" data-room-mode="with-scales" aria-pressed="false" class="py-2 rounded-xl border border-zinc-700 bg-zinc-950 text-zinc-400 text-xs font-bold transition">Con scale</button>
+            <button id="btnModeLiarsDice" type="button" data-room-mode="liars-dice" aria-pressed="false" class="py-2 rounded-xl border border-zinc-700 bg-zinc-950 text-zinc-400 text-xs font-bold transition">Liar's Dice</button>
           </div>
-          <p class="mt-1 text-[10px] text-zinc-500">Con scale: 3 dadi = 800 pt · 4 dadi = 1.000 pt</p>
+          <p class="mt-1 text-[10px] text-zinc-500">Con scale: 3 dadi = 800 pt · 4 dadi = 1.000 pt. Liar's Dice: bluff e dadi nascosti.</p>
           <p id="roomModeNotice" class="hidden mt-1 text-[10px] text-amber-300"></p>
         </div>
         <div id="containerTargetScore" class="hidden">
@@ -366,6 +367,38 @@
   <!-- Main Game Area -->
   <main class="w-full max-w-5xl mx-auto flex-1 flex flex-col gap-3 sm:gap-5 justify-center py-2">
 
+    <section id="liarDiceArea" class="hidden rounded-3xl bg-zinc-900/90 border border-purple-500/30 p-4 sm:p-6 space-y-4">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <h2 class="text-xl font-black text-purple-300 font-display">Liar's Dice</h2>
+          <p id="liarDiceStatus" class="text-xs text-zinc-400 mt-1">In attesa dei giocatori...</p>
+        </div>
+        <span id="liarDiceRound" class="text-[10px] text-zinc-400 whitespace-nowrap">Round 1</span>
+      </div>
+      <div class="rounded-2xl bg-zinc-950 border border-zinc-800 p-3">
+        <p class="text-[10px] text-zinc-500 uppercase font-bold tracking-wider">La tua mano (nascosta agli avversari)</p>
+        <div id="liarDiceHand" class="flex gap-2 mt-2 min-h-9 items-center"></div>
+        <button id="btnRollLiarDice" class="w-full mt-3 py-2.5 rounded-xl bg-purple-500 hover:bg-purple-400 text-zinc-950 font-black text-sm transition">Tira i tuoi dadi</button>
+      </div>
+      <div class="rounded-2xl bg-zinc-950 border border-zinc-800 p-3">
+        <p class="text-[10px] text-zinc-500 uppercase font-bold tracking-wider">Puntata attuale</p>
+        <p id="liarDiceCurrentBid" class="text-sm text-white font-bold mt-1">Nessuna puntata</p>
+        <p id="liarDiceTurn" class="text-xs text-zinc-400 mt-1"></p>
+        <button id="btnOpenLiarBid" class="hidden w-full mt-3 py-2.5 rounded-xl bg-amber-400 text-zinc-950 font-black text-sm">Apri puntata</button>
+        <div id="liarDiceHistory" class="hidden mt-3 border-t border-zinc-800 pt-2 space-y-1"></div>
+      </div>
+      <div>
+        <p class="text-[10px] text-zinc-500 uppercase font-bold tracking-wider mb-2">Giocatori</p>
+        <div id="liarDicePlayers" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
+      </div>
+      <div id="liarDiceResult" class="hidden rounded-2xl bg-amber-950/40 border border-amber-500/40 p-3">
+        <p id="liarDiceResultText" class="text-sm text-amber-200 font-bold"></p>
+        <div id="liarDiceReveal" class="flex flex-wrap gap-2 mt-2 text-xs text-zinc-300"></div>
+        <button id="btnContinueLiarRound" class="hidden w-full mt-3 py-2.5 rounded-xl bg-amber-400 text-zinc-950 font-black text-sm">Avvia il round successivo</button>
+      </div>
+    </section>
+
+    <div id="zongGameArea" class="flex flex-col gap-3 sm:gap-5">
     <!-- Players Cards Container -->
     <div id="playersContainer" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2"></div>
 
@@ -506,6 +539,7 @@
         <p class="text-zinc-500 italic">Pronti. Obiettivo 10.000 punti!</p>
       </div>
     </div>
+    </div>
 
     <!-- Chat di Gruppo Stanza -->
     <div class="rounded-xl bg-zinc-900/70 border border-zinc-800 p-3 flex flex-col gap-2">
@@ -526,6 +560,30 @@
       </form>
     </div>
   </main>
+
+  <div id="liarBidModal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-zinc-900 border border-amber-500/50 rounded-3xl p-5 max-w-sm w-full shadow-2xl">
+      <div class="flex items-center justify-between mb-1">
+        <h3 class="text-lg font-black text-amber-300 font-display">La tua puntata</h3>
+        <button id="btnCloseLiarBid" type="button" class="text-zinc-400 hover:text-white" aria-label="Chiudi puntata">✕</button>
+      </div>
+      <p class="text-xs text-zinc-400 mb-4">Dichiara quanti dadi di una faccia pensi ci siano sul tavolo, oppure dubita.</p>
+      <form id="liarBidForm" class="space-y-3">
+        <label class="block text-xs text-zinc-300">Numero di dadi
+          <input id="liarBidQuantity" type="number" min="1" step="1" required class="block w-full mt-1 bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-2 text-white text-base focus:outline-none focus:border-amber-400">
+        </label>
+        <label class="block text-xs text-zinc-300">Faccia (1-6, senza jolly)
+          <select id="liarBidFace" class="block w-full mt-1 bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-2 text-white text-base focus:outline-none focus:border-amber-400">
+            <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+            <option value="4">4</option><option value="5">5</option><option value="6">6</option>
+          </select>
+        </label>
+        <p id="liarBidError" class="hidden text-xs text-red-300"></p>
+        <button type="submit" class="w-full py-3 rounded-xl bg-amber-400 text-zinc-950 font-black text-sm">Conferma puntata</button>
+        <button id="btnCallLiar" type="button" class="hidden w-full py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-black text-sm">DUBITO · verifica i dadi</button>
+      </form>
+    </div>
+  </div>
 
   <!-- FOOTER -->
   <footer class="w-full text-center py-3 border-t border-zinc-900 text-zinc-500 text-xs font-medium tracking-wide">
@@ -577,6 +635,12 @@
         <p>• <strong>Quaterna:</strong> 2x Tris | <strong>Cinquina:</strong> 4x Tris</p>
         <p>• <strong>Scala (1-5 o 2-6):</strong> 1500 pt</p>
         <p id="scaleModeRules" class="hidden">• <strong>Modalità Con scale:</strong> la scala da 3 dadi vale 800 pt e quella da 4 dadi 1000 pt. Le scale vengono calcolate nel punteggio quando il giocatore seleziona i dadi della scala validi con la possibilità di fare hot dice e ritirare tutti i dadi.</p>
+        <div id="liarDiceRules" class="hidden space-y-2">
+          <p>• <strong>Preparazione:</strong> ogni giocatore parte con 5 dadi. Al primo round un tiro di spareggio assegna l'apertura a chi ottiene il valore più alto; poi tutti tirano i propri dadi, nascosti agli avversari. I numeri 1 sono normali: non sono jolly.</p>
+          <p>• <strong>Puntate:</strong> a turno si dichiara quanti dadi di una faccia ci sono in totale. Puoi aumentare la quantità oppure, a quantità uguale, alzare la faccia. Non puoi ridurre la quantità.</p>
+          <p>• <strong>Dubbio:</strong> invece di rilanciare puoi contestare l'ultima puntata. Se i dadi reali di quella faccia sono meno della quantità dichiarata, perde un dado chi ha puntato; altrimenti lo perde chi ha dubitato.</p>
+          <p>• <strong>Round successivo:</strong> chi perde un dado tira per primo nel round seguente. A zero dadi si è eliminati; vince l'ultimo giocatore rimasto. La partita funziona da 2 giocatori in su, anche oltre 6.</p>
+        </div>
         <p>• <strong>Apertura:</strong> Minimo 500 pt in un turno per registrare punti sul tabellone.</p>
         <p>• <strong>✨ Sei Magico:</strong> Se resta 1 solo dado ed esce 6, non perdi con Zong! Guadagni 0 pt ma sblocchi l'Hot Dice rilanciando tutti i 5 dadi.</p>
         <p>• <strong>✂️ Due Cinque:</strong> Uniscili per accantonare solo un 5 guadagnando 100 pt e tenendo l'altro libero per il tiro successivo.</p>
@@ -896,6 +960,16 @@
       totalRolls: {},
       round: 1,
       phase: 'ready',
+      liarPhase: 'roll',
+      liarRound: 1,
+      liarStarter: 1,
+      liarParticipants: [],
+      liarDiceCounts: {},
+      liarHands: {},
+      liarOpeningRolls: {},
+      liarCurrentBid: null,
+      liarBets: [],
+      liarResult: null,
       isInheritedTurn: false,
       dice: [
         { value: 1, status: 'free' },
@@ -1141,6 +1215,7 @@
     const btnCloseRules = document.getElementById('btnCloseRules');
     const rulesModal = document.getElementById('rulesModal');
     const scaleModeRules = document.getElementById('scaleModeRules');
+    const liarDiceRules = document.getElementById('liarDiceRules');
     const btnLeaderboard = document.getElementById('btnLeaderboard');
     const btnCloseLeaderboard = document.getElementById('btnCloseLeaderboard');
     const leaderboardModal = document.getElementById('leaderboardModal');
@@ -1200,10 +1275,39 @@
     const chatLogContainer = document.getElementById('chatLogContainer');
     const chatForm = document.getElementById('chatForm');
     const chatInput = document.getElementById('chatInput');
+    const zongGameArea = document.getElementById('zongGameArea');
+    const liarDiceArea = document.getElementById('liarDiceArea');
+    const liarDiceStatus = document.getElementById('liarDiceStatus');
+    const liarDiceRound = document.getElementById('liarDiceRound');
+    const liarDiceHand = document.getElementById('liarDiceHand');
+    const liarDicePlayers = document.getElementById('liarDicePlayers');
+    const liarDiceCurrentBid = document.getElementById('liarDiceCurrentBid');
+    const liarDiceTurn = document.getElementById('liarDiceTurn');
+    const liarDiceHistory = document.getElementById('liarDiceHistory');
+    const liarDiceResult = document.getElementById('liarDiceResult');
+    const liarDiceResultText = document.getElementById('liarDiceResultText');
+    const liarDiceReveal = document.getElementById('liarDiceReveal');
+    const liarBidModal = document.getElementById('liarBidModal');
+    const liarBidForm = document.getElementById('liarBidForm');
+    const liarBidQuantity = document.getElementById('liarBidQuantity');
+    const liarBidFace = document.getElementById('liarBidFace');
+    const liarBidError = document.getElementById('liarBidError');
+    const btnRollLiarDice = document.getElementById('btnRollLiarDice');
+    const btnOpenLiarBid = document.getElementById('btnOpenLiarBid');
+    const btnCloseLiarBid = document.getElementById('btnCloseLiarBid');
+    const btnCallLiar = document.getElementById('btnCallLiar');
+    const btnContinueLiarRound = document.getElementById('btnContinueLiarRound');
+    let activeLiarBidModalKey = null;
+    let dismissedLiarBidModalKey = null;
     let selectedRoomMode = 'normal';
 
+    function normalizeRoomMode(mode) {
+      if (mode === 'with-scales' || mode === 'liars-dice') return mode;
+      return 'normal';
+    }
+
     function setRoomMode(mode) {
-      selectedRoomMode = mode === 'with-scales' ? 'with-scales' : 'normal';
+      selectedRoomMode = normalizeRoomMode(mode);
       roomModeButtons.forEach(button => {
         const isSelected = button.dataset.roomMode === selectedRoomMode;
         button.setAttribute('aria-pressed', String(isSelected));
@@ -1251,10 +1355,11 @@
             setRoomModeButtonsDisabled(false);
           } else {
             containerTargetScore.classList.add('hidden');
-            const roomMode = data.state && data.state.mode === 'with-scales' ? 'with-scales' : 'normal';
+            const roomMode = normalizeRoomMode(data.state && data.state.mode);
             setRoomMode(roomMode);
             setRoomModeButtonsDisabled(true);
-            roomModeNotice.textContent = `Stanza esistente: modalità ${roomMode === 'with-scales' ? 'Con scale' : 'Normale'}.`;
+            const roomModeName = roomMode === 'with-scales' ? 'Con scale' : roomMode === 'liars-dice' ? "Liar's Dice" : 'Normale';
+            roomModeNotice.textContent = `Stanza esistente: modalità ${roomModeName}.`;
             roomModeNotice.classList.remove('hidden');
           }
         } catch (error) {
@@ -1299,6 +1404,10 @@
     }
 
     function openEditPlayersModal() {
+      if (GameState.mode === 'liars-dice') {
+        alert("In Liar's Dice i partecipanti non si possono modificare durante la partita. Avvia una nuova partita per scegliere i giocatori.");
+        return;
+      }
       editPlayerSelectList.innerHTML = '';
       for (let i = 1; i <= GameState.numPlayers; i++) {
         const pName = getPlayerName(i);
@@ -1423,6 +1532,319 @@
       }
     }
 
+    function getLiarAlivePlayers() {
+      const alive = [];
+      for (let i = 1; i <= GameState.numPlayers; i++) {
+        if ((GameState.liarDiceCounts && GameState.liarDiceCounts[i]) > 0) alive.push(i);
+      }
+      return alive;
+    }
+
+    function getLiarPlayerIndex(playerId = myPlayerId) {
+      for (let i = 1; i <= GameState.numPlayers; i++) {
+        if (GameState.playerIds[i] === playerId) return i;
+      }
+      return -1;
+    }
+
+    function findNextLiarPlayer(afterIndex, players = getLiarAlivePlayers()) {
+      if (players.length === 0) return 0;
+      for (let step = 1; step <= GameState.numPlayers; step++) {
+        const candidate = ((afterIndex - 1 + step) % GameState.numPlayers) + 1;
+        if (players.includes(candidate)) return candidate;
+      }
+      return players[0];
+    }
+
+    function rollLiarDice() {
+      if (GameState.mode !== 'liars-dice' || GameState.liarPhase !== 'roll') return;
+      const playerIndex = getLiarPlayerIndex();
+      if (playerIndex < 1 || (GameState.liarDiceCounts[playerIndex] || 0) < 1) return;
+      if (playerIndex !== GameState.activePlayer) return;
+
+      const alivePlayers = getLiarAlivePlayers();
+      if (alivePlayers.length < 2) {
+        GameState.liarPhase = 'finished';
+        GameState.activePlayer = alivePlayers[0] || playerIndex;
+        updateUI();
+        saveStateToCloud();
+        return;
+      }
+
+      if (!Array.isArray(GameState.liarParticipants) || GameState.liarParticipants.length === 0) {
+        const starterPosition = Math.max(0, alivePlayers.indexOf(GameState.liarStarter));
+        GameState.liarParticipants = alivePlayers.slice(starterPosition).concat(alivePlayers.slice(0, starterPosition));
+        GameState.liarHands = {};
+      }
+      if (!GameState.liarParticipants.includes(playerIndex)) return;
+      if (Array.isArray(GameState.liarHands[playerIndex])) return;
+
+      GameState.liarHands[playerIndex] = Array.from(
+        { length: GameState.liarDiceCounts[playerIndex] },
+        () => getRandomDiceRoll()
+      );
+      if ((GameState.liarRound || 1) === 1) {
+        if (!GameState.liarOpeningRolls) GameState.liarOpeningRolls = {};
+        GameState.liarOpeningRolls[playerIndex] = getRandomDiceRoll();
+      }
+
+      const allRolled = GameState.liarParticipants.every(index => Array.isArray(GameState.liarHands[index]));
+      if (allRolled) {
+        if ((GameState.liarRound || 1) === 1 && GameState.liarParticipants.length > 0) {
+          const highestOpeningRoll = Math.max(...GameState.liarParticipants.map(index => GameState.liarOpeningRolls[index]));
+          const firstPlayers = GameState.liarParticipants.filter(index => GameState.liarOpeningRolls[index] === highestOpeningRoll);
+          GameState.liarStarter = firstPlayers[Math.floor(Math.random() * firstPlayers.length)];
+        }
+        GameState.liarPhase = 'bidding';
+        GameState.activePlayer = GameState.liarStarter;
+      } else {
+        GameState.activePlayer = GameState.liarParticipants.find(index => !Array.isArray(GameState.liarHands[index]));
+      }
+      updateUI();
+      saveStateToCloud();
+    }
+
+    function makeLiarBid(quantity, face) {
+      if (GameState.mode !== 'liars-dice' || GameState.liarPhase !== 'bidding' || !isMyTurn()) return false;
+      if (!Number.isInteger(quantity) || quantity < 1 || !Number.isInteger(face) || face < 1 || face > 6) {
+        liarBidError.textContent = 'Inserisci una quantità intera positiva e una faccia da 1 a 6.';
+        liarBidError.classList.remove('hidden');
+        return false;
+      }
+
+      const previousBid = GameState.liarCurrentBid;
+      if (previousBid && (
+        quantity < previousBid.quantity ||
+        quantity === previousBid.quantity && face <= previousBid.face
+      )) {
+        liarBidError.textContent = 'La puntata deve aumentare la quantità o, a quantità uguale, la faccia.';
+        liarBidError.classList.remove('hidden');
+        return false;
+      }
+
+      GameState.liarCurrentBid = { quantity, face, playerIndex: GameState.activePlayer };
+      if (!Array.isArray(GameState.liarBets)) GameState.liarBets = [];
+      GameState.liarBets.unshift({
+        quantity,
+        face,
+        playerIndex: GameState.activePlayer,
+        playerName: getPlayerName(GameState.activePlayer)
+      });
+      if (GameState.liarBets.length > 12) GameState.liarBets.pop();
+
+      const participants = GameState.liarParticipants || [];
+      const currentPosition = participants.indexOf(GameState.activePlayer);
+      const nextPlayer = participants[(currentPosition + 1) % participants.length];
+      GameState.activePlayer = nextPlayer;
+      activeLiarBidModalKey = null;
+      dismissedLiarBidModalKey = null;
+      liarBidModal.classList.add('hidden');
+      updateUI();
+      saveStateToCloud();
+      return true;
+    }
+
+    function callLiar() {
+      if (GameState.mode !== 'liars-dice' || GameState.liarPhase !== 'bidding' || !isMyTurn() || !GameState.liarCurrentBid) return;
+
+      const bid = GameState.liarCurrentBid;
+      const actual = (GameState.liarParticipants || []).reduce((total, index) => {
+        const hand = GameState.liarHands[index] || [];
+        return total + hand.filter(value => value === bid.face).length;
+      }, 0);
+      const loserIndex = actual < bid.quantity ? bid.playerIndex : GameState.activePlayer;
+      GameState.liarDiceCounts[loserIndex] = Math.max(0, (GameState.liarDiceCounts[loserIndex] || 0) - 1);
+      GameState.liarResult = {
+        bid: { ...bid },
+        actual,
+        loserIndex,
+        callerIndex: GameState.activePlayer,
+        hands: { ...GameState.liarHands }
+      };
+      GameState.liarStarter = GameState.liarDiceCounts[loserIndex] > 0
+        ? loserIndex
+        : findNextLiarPlayer(loserIndex);
+      GameState.activePlayer = GameState.liarStarter;
+      GameState.liarPhase = getLiarAlivePlayers().length <= 1 ? 'finished' : 'result';
+      activeLiarBidModalKey = null;
+      dismissedLiarBidModalKey = null;
+      liarBidModal.classList.add('hidden');
+      updateUI();
+      saveStateToCloud();
+    }
+
+    function startNextLiarRound() {
+      if (GameState.mode !== 'liars-dice' || GameState.liarPhase !== 'result' || !isMyTurn()) return;
+      GameState.liarRound = (GameState.liarRound || 1) + 1;
+      GameState.round = GameState.liarRound;
+      GameState.liarParticipants = [];
+      GameState.liarHands = {};
+      GameState.liarOpeningRolls = {};
+      GameState.liarCurrentBid = null;
+      GameState.liarBets = [];
+      GameState.liarResult = null;
+      GameState.activePlayer = GameState.liarStarter;
+      GameState.liarPhase = 'roll';
+      updateUI();
+      saveStateToCloud();
+    }
+
+    function renderLiarDiceUI() {
+      const myIndex = getLiarPlayerIndex();
+      const myHand = GameState.liarHands && GameState.liarHands[myIndex];
+      const alivePlayers = getLiarAlivePlayers();
+      const participants = Array.isArray(GameState.liarParticipants) ? GameState.liarParticipants : [];
+      const isParticipant = participants.includes(myIndex);
+      const isMyBid = GameState.liarPhase === 'bidding' && isMyTurn();
+      const myTurnKey = `${GameState.liarRound || 1}:${GameState.activePlayer}`;
+      const canRoll = GameState.liarPhase === 'roll' && myIndex > 0 && alivePlayers.length >= 2 &&
+        myIndex === GameState.activePlayer &&
+        (participants.length === 0 || isParticipant && !Array.isArray(myHand));
+
+      liarDiceRound.textContent = `Round ${GameState.liarRound || 1}`;
+      liarDiceHand.replaceChildren();
+      if (Array.isArray(myHand)) {
+        myHand.forEach(value => {
+          const die = document.createElement('span');
+          die.className = 'w-9 h-9 rounded-lg bg-zinc-800 border border-purple-400/40 text-white font-black text-lg flex items-center justify-center';
+          die.textContent = value;
+          liarDiceHand.appendChild(die);
+        });
+      } else {
+        const hint = document.createElement('span');
+        hint.className = 'text-xs text-zinc-500';
+        hint.textContent = myIndex > 0 ? 'I tuoi dadi sono ancora nel bicchiere.' : 'Entra nella stanza per giocare.';
+        liarDiceHand.appendChild(hint);
+      }
+
+      btnRollLiarDice.classList.toggle('hidden', GameState.liarPhase !== 'roll' ||
+        (isParticipant && Array.isArray(myHand)) || (participants.length > 0 && !isParticipant));
+      btnRollLiarDice.disabled = !canRoll;
+      btnRollLiarDice.classList.toggle('opacity-50', !canRoll);
+      btnRollLiarDice.textContent = canRoll
+        ? 'Tira i tuoi dadi'
+        : alivePlayers.length < 2 && GameState.liarPhase === 'roll'
+          ? 'Servono almeno 2 giocatori'
+          : isParticipant && Array.isArray(myHand)
+            ? 'Dadi tirati · attendi gli altri'
+            : GameState.liarPhase === 'roll' && isParticipant
+              ? `Attendi il tiro di ${getPlayerName(GameState.activePlayer)}`
+            : 'Round già iniziato · giocherai dal prossimo';
+
+      if (GameState.liarPhase === 'roll') {
+        const rolledCount = participants.filter(index => Array.isArray(GameState.liarHands[index])).length;
+        liarDiceStatus.textContent = alivePlayers.length < 2
+          ? 'Servono almeno 2 giocatori ancora in gara per iniziare.'
+          : participants.length > 0 && !isParticipant
+            ? 'Round già iniziato. Potrai tirare i dadi dal prossimo round.'
+          : participants.length === 0
+            ? `Ogni giocatore tira i propri dadi. Inizia ${getPlayerName(GameState.activePlayer)}.`
+            : `Dadi tirati: ${rolledCount} su ${participants.length}. Ora tocca a ${getPlayerName(GameState.activePlayer)}.`;
+      } else if (GameState.liarPhase === 'bidding') {
+        liarDiceStatus.textContent = `Turno di ${getPlayerName(GameState.activePlayer)} · scegli una puntata o dubita.`;
+      } else if (GameState.liarPhase === 'result') {
+        liarDiceStatus.textContent = 'Dadi scoperti: il round è terminato.';
+      } else {
+        const winner = alivePlayers[0];
+        liarDiceStatus.textContent = winner ? `${getPlayerName(winner)} vince: è l'ultimo giocatore con dadi.` : 'Partita terminata.';
+      }
+
+      if (GameState.liarCurrentBid) {
+        const bid = GameState.liarCurrentBid;
+        liarDiceCurrentBid.textContent = `${bid.quantity} ${bid.quantity === 1 ? 'dado' : 'dadi'} con faccia ${bid.face} · ${getPlayerName(bid.playerIndex)}`;
+      } else {
+        liarDiceCurrentBid.textContent = 'Nessuna puntata · il giocatore iniziale apre il round.';
+      }
+      liarDiceTurn.textContent = GameState.liarPhase === 'bidding'
+        ? `${isMyBid ? 'È il tuo turno.' : `Turno di ${getPlayerName(GameState.activePlayer)}.`}`
+        : '';
+
+      liarDiceHistory.replaceChildren();
+      const recentBets = (GameState.liarBets || []).slice(0, 5);
+      liarDiceHistory.classList.toggle('hidden', recentBets.length === 0);
+      recentBets.forEach(bet => {
+        const entry = document.createElement('p');
+        entry.className = 'text-[11px] text-zinc-400';
+        entry.textContent = `${bet.playerName}: ${bet.quantity} ${bet.quantity === 1 ? 'dado' : 'dadi'} di ${bet.face}`;
+        liarDiceHistory.appendChild(entry);
+      });
+
+      liarDicePlayers.replaceChildren();
+      for (let i = 1; i <= GameState.numPlayers; i++) {
+        const card = document.createElement('div');
+        const diceCount = GameState.liarDiceCounts[i] || 0;
+        const playerRolled = Array.isArray(GameState.liarHands && GameState.liarHands[i]);
+        const inRound = participants.includes(i);
+        card.className = `flex items-center justify-between gap-2 rounded-xl border p-2 text-xs ${
+          i === GameState.activePlayer && GameState.liarPhase === 'bidding'
+            ? 'border-amber-400 bg-amber-500/10'
+            : diceCount > 0 ? 'border-zinc-800 bg-zinc-950/70' : 'border-zinc-900 bg-zinc-950/30 opacity-50'
+        }`;
+        const identity = document.createElement('span');
+        identity.className = 'font-bold truncate';
+        identity.style.color = PLAYER_COLORS[(i - 1) % PLAYER_COLORS.length];
+        identity.textContent = `${getPlayerName(i)}${GameState.playerIds[i] === myPlayerId ? ' (Tu)' : ''}`;
+        const status = document.createElement('span');
+        status.className = 'text-right text-zinc-300 whitespace-nowrap';
+        status.textContent = diceCount === 0
+          ? 'Eliminato'
+          : `${diceCount} ${diceCount === 1 ? 'dado' : 'dadi'} · ${
+            GameState.liarPhase === 'result' || GameState.liarPhase === 'finished'
+              ? 'mano rivelata'
+              : playerRolled && inRound ? 'mano coperta'
+                : GameState.liarPhase === 'roll' && (participants.length === 0 || inRound)
+                  ? i === GameState.activePlayer ? 'tocca a lui' : 'in attesa'
+                  : GameState.liarPhase === 'roll' ? 'round successivo' : 'in attesa del tiro'
+          }`;
+        card.append(identity, status);
+        liarDicePlayers.appendChild(card);
+      }
+
+      const hasResult = GameState.liarPhase === 'result' || GameState.liarPhase === 'finished';
+      liarDiceResult.classList.toggle('hidden', !hasResult);
+      liarDiceReveal.replaceChildren();
+      if (hasResult && GameState.liarResult) {
+        const result = GameState.liarResult;
+        const loserName = getPlayerName(result.loserIndex);
+        const lostDice = result.loserIndex === result.callerIndex ? 'chi ha dubitato' : 'chi ha puntato';
+        liarDiceResultText.textContent = `${result.actual} dadi con faccia ${result.bid.face} trovati su ${result.bid.quantity} dichiarati. Perde un dado ${lostDice}: ${loserName}${GameState.liarDiceCounts[result.loserIndex] === 0 ? ' (eliminato)' : ''}.`;
+        Object.keys(result.hands || {}).forEach(index => {
+          const hand = document.createElement('span');
+          hand.className = 'rounded-lg bg-zinc-900 px-2 py-1';
+          hand.textContent = `${getPlayerName(Number(index))}: ${(result.hands[index] || []).join(' · ')}`;
+          liarDiceReveal.appendChild(hand);
+        });
+      } else if (GameState.liarPhase === 'finished') {
+        const winner = alivePlayers[0];
+        liarDiceResultText.textContent = winner
+          ? `${getPlayerName(winner)} vince la partita!`
+          : 'Partita terminata.';
+      } else {
+        liarDiceResultText.textContent = '';
+      }
+      btnContinueLiarRound.classList.toggle('hidden', GameState.liarPhase !== 'result' || !isMyTurn());
+      if (GameState.liarPhase === 'finished') {
+        liarDiceResult.classList.remove('hidden');
+        liarDiceResultText.textContent = alivePlayers[0]
+          ? `${getPlayerName(alivePlayers[0])} vince la partita!`
+          : 'Partita terminata.';
+      }
+
+      btnOpenLiarBid.classList.toggle('hidden', !isMyBid || !liarBidModal.classList.contains('hidden'));
+      btnCallLiar.classList.toggle('hidden', !GameState.liarCurrentBid);
+      if (!isMyBid) {
+        liarBidModal.classList.add('hidden');
+        activeLiarBidModalKey = null;
+      } else if (activeLiarBidModalKey !== myTurnKey) {
+        activeLiarBidModalKey = myTurnKey;
+        dismissedLiarBidModalKey = null;
+        liarBidQuantity.value = GameState.liarCurrentBid ? GameState.liarCurrentBid.quantity + 1 : '1';
+        liarBidFace.value = GameState.liarCurrentBid ? String(GameState.liarCurrentBid.face) : '1';
+        liarBidError.classList.add('hidden');
+      }
+      if (isMyBid && dismissedLiarBidModalKey !== myTurnKey) liarBidModal.classList.remove('hidden');
+    }
+
     function updateUI() {
       if (newGameModal && !newGameModal.classList.contains('hidden')) {
         newGameModal.classList.add('hidden');
@@ -1434,6 +1856,13 @@
       TARGET_SCORE = GameState.targetScore || TARGET_SCORE;
       if (targetScoreHeaderLabel) {
         targetScoreHeaderLabel.textContent = `${TARGET_SCORE.toLocaleString('it-IT')} pt`;
+      }
+      const isLiarsDice = GameState.mode === 'liars-dice';
+      zongGameArea.classList.toggle('hidden', isLiarsDice);
+      liarDiceArea.classList.toggle('hidden', !isLiarsDice);
+      if (isLiarsDice) {
+        renderLiarDiceUI();
+        return;
       }
       renderLogs();
       initScoreboard();
@@ -2102,6 +2531,17 @@
       GameState.activePlayer = 1;
       GameState.round = 1;
       GameState.phase = 'ready';
+      GameState.liarPhase = 'roll';
+      GameState.liarRound = 1;
+      GameState.liarStarter = 1;
+      GameState.liarParticipants = [];
+      GameState.liarDiceCounts = {};
+      for (let i = 1; i <= GameState.numPlayers; i++) GameState.liarDiceCounts[i] = 5;
+      GameState.liarHands = {};
+      GameState.liarOpeningRolls = {};
+      GameState.liarCurrentBid = null;
+      GameState.liarBets = [];
+      GameState.liarResult = null;
       GameState.dice = [
         { value: 1, status: 'free' }, { value: 2, status: 'free' }, { value: 3, status: 'free' },
         { value: 4, status: 'free' }, { value: 5, status: 'free' },
@@ -2117,6 +2557,16 @@
       Object.assign(GameState, {
         targetScore,
         mode,
+        liarPhase: 'roll',
+        liarRound: 1,
+        liarStarter: 1,
+        liarParticipants: [],
+        liarDiceCounts: { 1: 5 },
+        liarHands: {},
+        liarOpeningRolls: {},
+        liarCurrentBid: null,
+        liarBets: [],
+        liarResult: null,
         numPlayers: 1,
         activePlayer: 1,
         playerIds: { 1: myPlayerId },
@@ -2177,7 +2627,7 @@
             throw new Error("La stanza non contiene uno stato di gioco valido.");
           }
           Object.assign(GameState, data.state);
-          GameState.mode = data.state.mode === 'with-scales' ? 'with-scales' : 'normal';
+          GameState.mode = normalizeRoomMode(data.state.mode);
           setRoomMode(GameState.mode);
           setRoomModeButtonsDisabled(true);
           TARGET_SCORE = GameState.targetScore || 10000;
@@ -2190,6 +2640,11 @@
           GameState.hasEntered = GameState.hasEntered || {};
           GameState.zongCounts = GameState.zongCounts || {};
           GameState.totalRolls = GameState.totalRolls || {};
+          GameState.liarDiceCounts = GameState.liarDiceCounts || {};
+          GameState.liarHands = GameState.liarHands || {};
+          GameState.liarOpeningRolls = GameState.liarOpeningRolls || {};
+          GameState.liarParticipants = Array.isArray(GameState.liarParticipants) ? GameState.liarParticipants : [];
+          GameState.liarBets = Array.isArray(GameState.liarBets) ? GameState.liarBets : [];
           if (!GameState.chatLogs) GameState.chatLogs = [];
           
           let existingPlayerIndex = -1;
@@ -2222,6 +2677,7 @@
 
           if (existingPlayerIndex !== -1) {
             const playerIdMissing = !GameState.playerIds[existingPlayerIndex];
+            const liarDiceCountMissing = GameState.liarDiceCounts[existingPlayerIndex] === undefined;
             const playerId = GameState.playerIds[existingPlayerIndex] || myPlayerId;
             const nameChanged = GameState.playerNames[existingPlayerIndex] !== name;
             GameState.playerIds[existingPlayerIndex] = playerId;
@@ -2232,7 +2688,10 @@
             }
 
             GameState.playerNames[existingPlayerIndex] = name;
-            if (nameChanged || playerIdMissing) {
+            if (liarDiceCountMissing) {
+              GameState.liarDiceCounts[existingPlayerIndex] = 5;
+            }
+            if (nameChanged || playerIdMissing || liarDiceCountMissing) {
               await saveRoomState();
             }
 
@@ -2249,6 +2708,7 @@
             GameState.hasEntered[GameState.numPlayers] = false;
             GameState.zongCounts[GameState.numPlayers] = 0;
             GameState.totalRolls[GameState.numPlayers] = 0;
+            GameState.liarDiceCounts[GameState.numPlayers] = GameState.mode === 'liars-dice' && GameState.liarPhase === 'finished' ? 0 : 5;
             await saveRoomState();
           }
         }
@@ -2274,6 +2734,11 @@
               Object.assign(GameState, newState);
               if (!GameState.chatLogs) GameState.chatLogs = [];
               if (!GameState.inheritedRecords) GameState.inheritedRecords = {};
+              if (!GameState.liarDiceCounts) GameState.liarDiceCounts = {};
+              if (!GameState.liarHands) GameState.liarHands = {};
+              if (!GameState.liarOpeningRolls) GameState.liarOpeningRolls = {};
+              if (!Array.isArray(GameState.liarParticipants)) GameState.liarParticipants = [];
+              if (!Array.isArray(GameState.liarBets)) GameState.liarBets = [];
               
               renderChatHistory();
 
@@ -2426,6 +2891,36 @@
       btnRoll.addEventListener('click', () => { if (isMyTurn()) triggerHaptic(20); sound.init(); rollDice(); });
       btnBank.addEventListener('click', () => { if (isMyTurn()) triggerHaptic(20); bankPoints(); });
       btnSplit5s.addEventListener('click', () => { if (isMyTurn()) triggerHaptic(20); processSplitFives(); });
+      btnRollLiarDice.addEventListener('click', () => {
+        if (GameState.liarPhase === 'roll') {
+          triggerHaptic(30);
+          rollLiarDice();
+        }
+      });
+      liarBidForm.addEventListener('submit', event => {
+        event.preventDefault();
+        triggerHaptic(25);
+        makeLiarBid(Number(liarBidQuantity.value), Number(liarBidFace.value));
+      });
+      btnCallLiar.addEventListener('click', () => {
+        triggerHaptic(40);
+        callLiar();
+      });
+      btnContinueLiarRound.addEventListener('click', () => {
+        triggerHaptic(25);
+        startNextLiarRound();
+      });
+      btnOpenLiarBid.addEventListener('click', () => {
+        if (GameState.liarPhase === 'bidding' && isMyTurn()) {
+          liarBidModal.classList.remove('hidden');
+          btnOpenLiarBid.classList.add('hidden');
+        }
+      });
+      btnCloseLiarBid.addEventListener('click', () => {
+        dismissedLiarBidModalKey = activeLiarBidModalKey;
+        liarBidModal.classList.add('hidden');
+        btnOpenLiarBid.classList.toggle('hidden', !(GameState.liarPhase === 'bidding' && isMyTurn()));
+      });
 
       btnInherit.addEventListener('click', () => {
         if (!isMyTurn()) return;
@@ -2503,6 +2998,7 @@
       btnRules.addEventListener('click', () => {
         triggerHaptic(20);
         scaleModeRules.classList.toggle('hidden', GameState.mode !== 'with-scales');
+        liarDiceRules.classList.toggle('hidden', GameState.mode !== 'liars-dice');
         rulesModal.classList.remove('hidden');
       });
       btnCloseRules.addEventListener('click', () => { triggerHaptic(20); rulesModal.classList.add('hidden'); });
