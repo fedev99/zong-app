@@ -113,14 +113,10 @@
       .cube-face.f4 { transform: rotateX(90deg) translateZ(42px); }
     }
 
-.dice-container.selected .cube-face {
-      border-color: #facc15; /* Bordo oro brillante */
+    .dice-container.selected .cube-face {
+      border-color: #facc15;
       background: radial-gradient(circle at 35% 35%, #4b4629 0%, #242010 60%, #0d0c06 100%);
-      box-shadow: 
-        inset 0 3px 6px rgba(255, 235, 150, 0.4),
-        inset 0 -4px 8px rgba(0, 0, 0, 0.9),
-        0 0 22px rgba(250, 204, 21, 0.7), /* Effettoalone luminoso esterno */
-        0 10px 25px rgba(0, 0, 0, 0.8);
+      box-shadow: inset 0 3px 6px rgba(255, 235, 150, 0.4), inset 0 -4px 8px rgba(0, 0, 0, 0.9), 0 0 22px rgba(250, 204, 21, 0.7), 0 10px 25px rgba(0, 0, 0, 0.8);
     }
     .dice-container.selected { transform: translateY(-8px) scale(1.05); }
 
@@ -167,9 +163,7 @@
       85% { opacity: 1; transform: translate(-50%, 0) scale(1); }
       100% { opacity: 0; transform: translate(-50%, -20px) scale(0.9); }
     }
-    .toast-animate {
-      animation: toastFadeInOut 2.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
+    .toast-animate { animation: toastFadeInOut 2.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between overflow-x-hidden p-2 sm:p-4">
@@ -208,9 +202,9 @@
           <div class="grid grid-cols-3 gap-2">
             <button id="btnModeNormal" type="button" data-room-mode="normal" aria-pressed="true" class="py-2 rounded-xl border border-red-400 bg-red-500/15 text-red-200 text-xs font-bold transition">Normale</button>
             <button id="btnModeScales" type="button" data-room-mode="with-scales" aria-pressed="false" class="py-2 rounded-xl border border-zinc-700 bg-zinc-950 text-zinc-400 text-xs font-bold transition">Con scale</button>
-            <button id="btnModeLiarsDice" type="button" data-room-mode="liars-dice" aria-pressed="false" class="py-2 rounded-xl border border-zinc-700 bg-zinc-950 text-zinc-400 text-xs font-bold transition">Liar's Dice</button>
+            <button id="btnModeLiarsDice" type="button" data-room-mode="liars-dice" aria-pressed="false" class="py-2 rounded-xl border border-zinc-700 bg-zinc-950 text-zinc-400 text-xs font-bold transition">Con puntate</button>
           </div>
-          <p class="mt-1 text-[10px] text-zinc-500">Con scale: 3 dadi = 800 pt · 4 dadi = 1.000 pt. Liar's Dice: bluff e dadi nascosti.</p>
+          <p class="mt-1 text-[10px] text-zinc-500">Con scale: 3 dadi = 800 pt · 4 dadi = 1.000 pt. Con puntate: bluff, dadi nascosti e dichiarazioni.</p>
           <p id="roomModeNotice" class="hidden mt-1 text-[10px] text-amber-300"></p>
         </div>
         <div id="containerTargetScore" class="hidden">
@@ -328,7 +322,7 @@
       </div>
     </div>
 
-    <!-- Actions -->
+    <!-- Actions Navbar (Consapevole e Uniforme) -->
     <div class="flex items-center gap-1.5 sm:gap-2">
       <button id="btnSound" class="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300">
         <i data-lucide="volume-2" class="w-4 h-4"></i>
@@ -367,37 +361,70 @@
   <!-- Main Game Area -->
   <main class="w-full max-w-5xl mx-auto flex-1 flex flex-col gap-3 sm:gap-5 justify-center py-2">
 
-    <section id="liarDiceArea" class="hidden rounded-3xl bg-zinc-900/90 border border-purple-500/30 p-4 sm:p-6 space-y-4">
-      <div class="flex items-start justify-between gap-3">
+    <!-- SEZIONE MODALITÀ CON PUNTATE (Liar's Dice) MIGLIORATA -->
+    <section id="liarDiceArea" class="hidden rounded-3xl bg-zinc-900/90 border border-purple-500/30 p-4 sm:p-6 space-y-4 shadow-xl">
+      <div class="flex items-start justify-between gap-3 border-b border-zinc-800 pb-3">
         <div>
-          <h2 class="text-xl font-black text-purple-300 font-display">Liar's Dice</h2>
+          <h2 class="text-xl font-black text-purple-300 font-display flex items-center gap-2">
+            <i data-lucide="dice-5" class="w-5 h-5 text-purple-400"></i> Modalità con Puntate
+          </h2>
           <p id="liarDiceStatus" class="text-xs text-zinc-400 mt-1">In attesa dei giocatori...</p>
         </div>
-        <span id="liarDiceRound" class="text-[10px] text-zinc-400 whitespace-nowrap">Round 1</span>
+        <span id="liarDiceRound" class="px-2.5 py-1 rounded-full bg-purple-950/80 border border-purple-500/40 text-[11px] font-bold text-purple-300 whitespace-nowrap">Round 1</span>
       </div>
-      <div class="rounded-2xl bg-zinc-950 border border-zinc-800 p-3">
-        <p class="text-[10px] text-zinc-500 uppercase font-bold tracking-wider">La tua mano (nascosta agli avversari)</p>
-        <div id="liarDiceHand" class="flex gap-2 mt-2 min-h-9 items-center"></div>
-        <button id="btnRollLiarDice" class="w-full mt-3 py-2.5 rounded-xl bg-purple-500 hover:bg-purple-400 text-zinc-950 font-black text-sm transition">Tira i tuoi dadi</button>
+
+      <!-- Tavolo e Dadi Personali (Mantenuti uguali alle altre modalità ma nascosti agli altri) -->
+      <div class="felt-table rounded-2xl p-4 sm:p-6 relative overflow-hidden flex flex-col items-center justify-center min-h-[200px]">
+        <div class="absolute inset-0 pointer-events-none flex items-center justify-center opacity-5 select-none font-display font-black text-6xl tracking-widest text-white uppercase">
+          ZONG BLUFF
+        </div>
+        <p class="text-[10px] text-amber-300 uppercase font-bold tracking-wider mb-2 z-10 flex items-center gap-1">
+          <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i> La tua mano di dadi (Nascosta agli avversari)
+        </p>
+        <div id="liarDiceHand" class="flex flex-wrap justify-center items-center gap-3 z-10 min-h-[75px]"></div>
+        
+        <button id="btnRollLiarDice" class="mt-4 px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-black text-xs sm:text-sm shadow-lg transition active:scale-95 z-10 flex items-center gap-2">
+          <i data-lucide="refresh-cw" class="w-4 h-4"></i> Tira i tuoi dadi nel bicchiere
+        </button>
       </div>
-      <div class="rounded-2xl bg-zinc-950 border border-zinc-800 p-3">
-        <p class="text-[10px] text-zinc-500 uppercase font-bold tracking-wider">Puntata attuale</p>
-        <p id="liarDiceCurrentBid" class="text-sm text-white font-bold mt-1">Nessuna puntata</p>
-        <p id="liarDiceTurn" class="text-xs text-zinc-400 mt-1"></p>
-        <button id="btnOpenLiarBid" class="hidden w-full mt-3 py-2.5 rounded-xl bg-amber-400 text-zinc-950 font-black text-sm">Apri puntata</button>
-        <div id="liarDiceHistory" class="hidden mt-3 border-t border-zinc-800 pt-2 space-y-1"></div>
+
+      <!-- Pannello Puntata Attuale e Azioni -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="rounded-2xl bg-zinc-950 border border-zinc-800 p-3.5 flex flex-col justify-between">
+          <div>
+            <p class="text-[10px] text-zinc-500 uppercase font-bold tracking-wider">Puntata Attuale sul Tavolo</p>
+            <p id="liarDiceCurrentBid" class="text-sm text-amber-300 font-bold mt-1.5 flex items-center gap-1.5">Nessuna puntata attiva</p>
+            <p id="liarDiceTurn" class="text-xs text-zinc-400 mt-1"></p>
+          </div>
+          <div class="mt-3 flex gap-2">
+            <button id="btnOpenLiarBid" class="hidden flex-1 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-zinc-950 font-black text-xs sm:text-sm shadow transition">Fai o Rilancia Puntata</button>
+            <button id="btnCallLiar" class="hidden flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-black text-xs sm:text-sm shadow transition">DUBITO! 🕵️‍♂️</button>
+          </div>
+        </div>
+
+        <div class="rounded-2xl bg-zinc-950 border border-zinc-800 p-3.5 max-h-36 overflow-y-auto">
+          <p class="text-[10px] text-zinc-500 uppercase font-bold tracking-wider mb-1.5 sticky top-0 bg-zinc-950 py-0.5">Ultime Puntate</p>
+          <div id="liarDiceHistory" class="space-y-1">
+            <p class="text-xs text-zinc-500 italic">Nessuna cronologia in questo round.</p>
+          </div>
+        </div>
       </div>
+
+      <!-- Griglia Giocatori e Stato Dadi Rimasti -->
       <div>
-        <p class="text-[10px] text-zinc-500 uppercase font-bold tracking-wider mb-2">Giocatori</p>
-        <div id="liarDicePlayers" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
+        <p class="text-[10px] text-zinc-500 uppercase font-bold tracking-wider mb-2">Stato Giocatori & Dadi in Gara</p>
+        <div id="liarDicePlayers" class="grid grid-cols-2 sm:grid-cols-3 gap-2"></div>
       </div>
-      <div id="liarDiceResult" class="hidden rounded-2xl bg-amber-950/40 border border-amber-500/40 p-3">
+
+      <!-- Risultato Dubbio -->
+      <div id="liarDiceResult" class="hidden rounded-2xl bg-amber-950/40 border border-amber-500/40 p-4 text-center">
         <p id="liarDiceResultText" class="text-sm text-amber-200 font-bold"></p>
-        <div id="liarDiceReveal" class="flex flex-wrap gap-2 mt-2 text-xs text-zinc-300"></div>
-        <button id="btnContinueLiarRound" class="hidden w-full mt-3 py-2.5 rounded-xl bg-amber-400 text-zinc-950 font-black text-sm">Avvia il round successivo</button>
+        <div id="liarDiceReveal" class="flex flex-wrap justify-center gap-2 mt-3 text-xs text-zinc-300"></div>
+        <button id="btnContinueLiarRound" class="hidden mx-auto mt-4 px-6 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-zinc-950 font-black text-sm shadow transition">Avvia il round successivo</button>
       </div>
     </section>
 
+    <!-- SEZIONE GIOCO NORMALE / CON SCALE -->
     <div id="zongGameArea" class="flex flex-col gap-3 sm:gap-5">
     <!-- Players Cards Container -->
     <div id="playersContainer" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2"></div>
@@ -561,26 +588,36 @@
     </div>
   </main>
 
+  <!-- MODALE PUNTATA MIGLIORATA (Liar's Bid Modal) -->
   <div id="liarBidModal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-zinc-900 border border-amber-500/50 rounded-3xl p-5 max-w-sm w-full shadow-2xl">
-      <div class="flex items-center justify-between mb-1">
-        <h3 class="text-lg font-black text-amber-300 font-display">La tua puntata</h3>
-        <button id="btnCloseLiarBid" type="button" class="text-zinc-400 hover:text-white" aria-label="Chiudi puntata">✕</button>
+    <div class="bg-zinc-900 border border-purple-500/50 rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
+        <h3 class="text-lg font-black text-purple-300 font-display flex items-center gap-2">
+          <i data-lucide="coins" class="w-5 h-5 text-amber-400"></i> Fai la tua Puntata
+        </h3>
+        <button id="btnCloseLiarBid" type="button" class="text-zinc-400 hover:text-white p-1 rounded-lg bg-zinc-800/50" aria-label="Chiudi puntata">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
       </div>
-      <p class="text-xs text-zinc-400 mb-4">Dichiara quanti dadi di una faccia pensi ci siano sul tavolo, oppure dubita.</p>
-      <form id="liarBidForm" class="space-y-3">
-        <label class="block text-xs text-zinc-300">Numero di dadi
-          <input id="liarBidQuantity" type="number" min="1" step="1" required class="block w-full mt-1 bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-2 text-white text-base focus:outline-none focus:border-amber-400">
-        </label>
-        <label class="block text-xs text-zinc-300">Faccia (1-6, senza jolly)
-          <select id="liarBidFace" class="block w-full mt-1 bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-2 text-white text-base focus:outline-none focus:border-amber-400">
+      <p class="text-xs text-zinc-400">Dichiara quanti dadi di una determinata faccia pensi siano presenti complessivamente sul tavolo tra tutti i giocatori.</p>
+      
+      <form id="liarBidForm" class="space-y-4">
+        <div>
+          <label class="block text-[11px] uppercase font-bold text-zinc-400 mb-1">Numero totale di dadi</label>
+          <input id="liarBidQuantity" type="number" min="1" step="1" required class="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-2.5 text-white text-base font-bold focus:outline-none focus:border-purple-400">
+        </div>
+        <div>
+          <label class="block text-[11px] uppercase font-bold text-zinc-400 mb-1">Faccia del dado (1 a 6)</label>
+          <select id="liarBidFace" class="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-2.5 text-white text-base font-bold focus:outline-none focus:border-purple-400">
             <option value="1">1</option><option value="2">2</option><option value="3">3</option>
             <option value="4">4</option><option value="5">5</option><option value="6">6</option>
           </select>
-        </label>
-        <p id="liarBidError" class="hidden text-xs text-red-300"></p>
-        <button type="submit" class="w-full py-3 rounded-xl bg-amber-400 text-zinc-950 font-black text-sm">Conferma puntata</button>
-        <button id="btnCallLiar" type="button" class="hidden w-full py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-black text-sm">DUBITO · verifica i dadi</button>
+        </div>
+        <p id="liarBidError" class="hidden text-xs text-red-400 font-semibold bg-red-950/40 p-2 rounded-lg border border-red-500/30"></p>
+        
+        <div class="space-y-2 pt-2">
+          <button type="submit" class="w-full py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-black text-sm shadow-lg transition">Conferma Puntata</button>
+        </div>
       </form>
     </div>
   </div>
@@ -636,10 +673,9 @@
         <p>• <strong>Scala (1-5 o 2-6):</strong> 1500 pt</p>
         <p id="scaleModeRules" class="hidden">• <strong>Modalità Con scale:</strong> la scala da 3 dadi vale 800 pt e quella da 4 dadi 1000 pt. Le scale vengono calcolate nel punteggio quando il giocatore seleziona i dadi della scala validi con la possibilità di fare hot dice e ritirare tutti i dadi.</p>
         <div id="liarDiceRules" class="hidden space-y-2">
-          <p>• <strong>Preparazione:</strong> ogni giocatore parte con 5 dadi. Al primo round un tiro di spareggio assegna l'apertura a chi ottiene il valore più alto; poi tutti tirano i propri dadi, nascosti agli avversari. I numeri 1 sono normali: non sono jolly.</p>
-          <p>• <strong>Puntate:</strong> a turno si dichiara quanti dadi di una faccia ci sono in totale. Puoi aumentare la quantità oppure, a quantità uguale, alzare la faccia. Non puoi ridurre la quantità.</p>
-          <p>• <strong>Dubbio:</strong> invece di rilanciare puoi contestare l'ultima puntata. Se i dadi reali di quella faccia sono meno della quantità dichiarata, perde un dado chi ha puntato; altrimenti lo perde chi ha dubitato.</p>
-          <p>• <strong>Round successivo:</strong> chi perde un dado tira per primo nel round seguente. A zero dadi si è eliminati; vince l'ultimo giocatore rimasto. La partita funziona da 2 giocatori in su, anche oltre 6.</p>
+          <p>• <strong>Modalità Con puntate:</strong> ogni giocatore parte con 5 dadi nascosti nel proprio bicchiere. Al primo turno un tiro di spareggio assegna l'apertura a chi ottiene il valore più alto.</p>
+          <p>• <strong>Puntate e Bluff:</strong> a turno si dichiara quanti dadi di una determinata faccia si pensa ci siano in totale sul tavolo. Puoi aumentare la quantità oppure la faccia a parità di quantità.</p>
+          <p>• <strong>Dubbio:</strong> invece di rilanciare puoi dubitare dell'ultima puntata. Se i dadi reali sono inferiori, chi ha puntato perde un dado; altrimenti lo perde chi ha dubitato.</p>
         </div>
         <p>• <strong>Apertura:</strong> Minimo 500 pt in un turno per registrare punti sul tabellone.</p>
         <p>• <strong>✨ Sei Magico:</strong> Se resta 1 solo dado ed esce 6, non perdi con Zong! Guadagni 0 pt ma sblocchi l'Hot Dice rilanciando tutti i 5 dadi.</p>
@@ -712,12 +748,9 @@
     const SUPABASE_URL = 'https://yguyjlgcdzoyoxnxcfsc.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlndXlqbGdjZHpveW94bnhjZnNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0NDY2MDAsImV4cCI6MjEwOTAyMjYwMH0.YKwG4zdEdfAtDuB7aCH1r_DpEaMoQslJMAAw3QCzL7U';
     
-    // Configurazione con ripristino automatico connessione per segnale debole
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
       realtime: {
-        params: {
-          eventsPerSecond: 10,
-        },
+        params: { eventsPerSecond: 10 },
         timeout: 20000,
         heartbeatIntervalMs: 15000,
       },
@@ -731,7 +764,6 @@
 
     let lastEventId = null;
 
-    // SISTEMA DI CODA E RETRY IN BACKGROUND (MODIFICATO PER NON BLOCCARE)
     const writeQueue = [];
     let isProcessingQueue = false;
 
@@ -748,7 +780,6 @@
       }
     }
 
-    // 🛑 FUNZIONE NON PIU' BLOCCANTE (Tolto l'await)
     function saveStateToCloud() {
       if (!roomCode) return;
       writeQueue.push({ roomCode: roomCode, statePayload: JSON.parse(JSON.stringify(GameState)) });
@@ -775,32 +806,20 @@
           if (!error) {
             writeQueue.shift();
           } else {
-            console.warn("Retrying database write in 2 seconds...", error);
             await new Promise(r => setTimeout(r, 2000));
           }
         } catch (e) {
-          console.error("Network error saving state:", e);
           break;
         }
       }
       isProcessingQueue = false;
     }
 
-    // 10 COLORI BRILLANTI E BEN DISTINTI PER FINO A 10 GIOCATORI
     const PLAYER_COLORS = [
-      '#fbbf24', // 1. Ambra / Giallo brillante
-      '#3b82f6', // 2. Blu vivo
-      '#10b981', // 3. Smeraldo / Verde brillante
-      '#a855f7', // 4. Viola brillante
-      '#f43f5e', // 5. Rosa / Lampone brillante
-      '#06b6d4', // 6. Turchese / Ciano
-      '#f97316', // 7. Arancione intenso
-      '#84cc16', // 8. Lime chiaro
-      '#ec4899', // 9. Rosa fucsia
-      '#6366f1'  // 10. Indaco brillante
+      '#fbbf24', '#3b82f6', '#10b981', '#a855f7', '#f43f5e',
+      '#06b6d4', '#f97316', '#84cc16', '#ec4899', '#6366f1'
     ];
 
-    // Fallback aptico iOS
     let _hapticLabel = null;
     let _lastIosTick = 0;
     function iosTick() {
@@ -1034,7 +1053,7 @@
           return PLAYER_COLORS[(i - 1) % PLAYER_COLORS.length];
         }
       }
-      return '#9ca3af'; // Colore fallback grigio
+      return '#9ca3af';
     }
 
     function getCounts(diceValues) {
@@ -1089,9 +1108,7 @@
         return { score: 0, isValid: true, description: "✨ Sei Magico! (Salvezza Zong)", isMagicSix: true };
       }
 
-      // Regola Scala per la modalità "Con Scale"
       if (GameState.mode === 'with-scales') {
-        // Scala da 5 dadi (1-5 o 2-6) = 1500 pt
         if (currentRollDiceCount === 5 && totalDice === 5) {
           for (let start = 1; start <= 2; start++) {
             const seq = Array.from({length: 5}, (_, i) => start + i);
@@ -1100,7 +1117,6 @@
             }
           }
         }
-        // Scala da 4 dadi = 1000 pt fissi (eseguibile tirando esattamente 4 dadi e facendo scala con 4 dadi)
         if (currentRollDiceCount === 4 && totalDice === 4) {
           for (let start = 1; start <= 3; start++) {
             const seq = Array.from({length: 4}, (_, i) => start + i);
@@ -1109,7 +1125,6 @@
             }
           }
         }
-        // Scala da 3 dadi = 800 pt fissi (eseguibile tirando esattamente 3 dadi e facendo scala con 3 dadi)
         if (currentRollDiceCount === 3 && totalDice === 3) {
           for (let start = 1; start <= 4; start++) {
             const seq = Array.from({length: 3}, (_, i) => start + i);
@@ -1119,7 +1134,6 @@
           }
         }
       } else {
-        // Modalità normale (scala da 5 dadi)
         if (totalDice === 5) {
           for (let start = 1; start <= 2; start++) {
             const seq = Array.from({length: 5}, (_, i) => start + i);
@@ -1258,7 +1272,6 @@
     const btnConfirmNewGame = document.getElementById('btnConfirmNewGame');
     const btnLeaveRoom = document.getElementById('btnLeaveRoom');
 
-    // Modale Edit Giocatori (Senza riavvio)
     const editPlayersModal = document.getElementById('editPlayersModal');
     const editPlayerSelectList = document.getElementById('editPlayerSelectList');
     const btnCancelEditPlayers = document.getElementById('btnCancelEditPlayers');
@@ -1358,12 +1371,11 @@
             const roomMode = normalizeRoomMode(data.state && data.state.mode);
             setRoomMode(roomMode);
             setRoomModeButtonsDisabled(true);
-            const roomModeName = roomMode === 'with-scales' ? 'Con scale' : roomMode === 'liars-dice' ? "Liar's Dice" : 'Normale';
+            const roomModeName = roomMode === 'with-scales' ? 'Con scale' : roomMode === 'liars-dice' ? "Con puntate" : 'Normale';
             roomModeNotice.textContent = `Stanza esistente: modalità ${roomModeName}.`;
             roomModeNotice.classList.remove('hidden');
           }
         } catch (error) {
-          console.error("Errore durante la verifica della stanza:", error);
           containerTargetScore.classList.add('hidden');
           roomModeNotice.classList.add('hidden');
           setRoomModeButtonsDisabled(false);
@@ -1405,7 +1417,7 @@
 
     function openEditPlayersModal() {
       if (GameState.mode === 'liars-dice') {
-        alert("In Liar's Dice i partecipanti non si possono modificare durante la partita. Avvia una nuova partita per scegliere i giocatori.");
+        alert("In modalità con puntate i partecipanti non si possono modificare durante la partita. Avvia una nuova partita per scegliere i giocatori.");
         return;
       }
       editPlayerSelectList.innerHTML = '';
@@ -1703,17 +1715,28 @@
 
       liarDiceRound.textContent = `Round ${GameState.liarRound || 1}`;
       liarDiceHand.replaceChildren();
+
       if (Array.isArray(myHand)) {
-        myHand.forEach(value => {
-          const die = document.createElement('span');
-          die.className = 'w-9 h-9 rounded-lg bg-zinc-800 border border-purple-400/40 text-white font-black text-lg flex items-center justify-center';
-          die.textContent = value;
-          liarDiceHand.appendChild(die);
+        myHand.forEach((val) => {
+          const wrapper = document.createElement('div');
+          wrapper.className = "dice-container";
+          wrapper.innerHTML = `
+            <div class="dice-scene" style="width: 56px; height: 56px;">
+              <div class="cube">
+                <div class="cube-face f${val}" style="transform: rotateY(0deg) translateZ(28px);">
+                  <div class="pip col-start-2 row-start-2"></div>
+                </div>
+              </div>
+            </div>
+          `;
+          // Sfrutta la grafica 3D del dado reale per mostrare la faccia nascosta del giocatore
+          applyCubeRotation(wrapper.querySelector('.cube'), val);
+          liarDiceHand.appendChild(wrapper);
         });
       } else {
         const hint = document.createElement('span');
-        hint.className = 'text-xs text-zinc-500';
-        hint.textContent = myIndex > 0 ? 'I tuoi dadi sono ancora nel bicchiere.' : 'Entra nella stanza per giocare.';
+        hint.className = 'text-xs text-zinc-400 italic text-center px-4';
+        hint.textContent = myIndex > 0 ? 'Clicca il pulsante sotto per tirare i dadi nel tuo bicchiere.' : 'Entra nella stanza per partecipare alla partita.';
         liarDiceHand.appendChild(hint);
       }
 
@@ -1722,7 +1745,7 @@
       btnRollLiarDice.disabled = !canRoll;
       btnRollLiarDice.classList.toggle('opacity-50', !canRoll);
       btnRollLiarDice.textContent = canRoll
-        ? 'Tira i tuoi dadi'
+        ? 'Tira i tuoi dadi nel bicchiere'
         : alivePlayers.length < 2 && GameState.liarPhase === 'roll'
           ? 'Servono almeno 2 giocatori'
           : isParticipant && Array.isArray(myHand)
@@ -1741,61 +1764,57 @@
             ? `Ogni giocatore tira i propri dadi. Inizia ${getPlayerName(GameState.activePlayer)}.`
             : `Dadi tirati: ${rolledCount} su ${participants.length}. Ora tocca a ${getPlayerName(GameState.activePlayer)}.`;
       } else if (GameState.liarPhase === 'bidding') {
-        liarDiceStatus.textContent = `Turno di ${getPlayerName(GameState.activePlayer)} · scegli una puntata o dubita.`;
+        liarDiceStatus.textContent = `Turno di ${getPlayerName(GameState.activePlayer)} · fai una puntata o dubita.`;
       } else if (GameState.liarPhase === 'result') {
         liarDiceStatus.textContent = 'Dadi scoperti: il round è terminato.';
       } else {
         const winner = alivePlayers[0];
-        liarDiceStatus.textContent = winner ? `${getPlayerName(winner)} vince: è l'ultimo giocatore con dadi.` : 'Partita terminata.';
+        liarDiceStatus.textContent = winner ? `${getPlayerName(winner)} vince: è l'ultimo giocatore rimasto.` : 'Partita terminata.';
       }
 
       if (GameState.liarCurrentBid) {
         const bid = GameState.liarCurrentBid;
-        liarDiceCurrentBid.textContent = `${bid.quantity} ${bid.quantity === 1 ? 'dado' : 'dadi'} con faccia ${bid.face} · ${getPlayerName(bid.playerIndex)}`;
+        liarDiceCurrentBid.textContent = `${bid.quantity} ${bid.quantity === 1 ? 'dado' : 'dadi'} con faccia ${bid.face} (Puntato da ${getPlayerName(bid.playerIndex)})`;
       } else {
-        liarDiceCurrentBid.textContent = 'Nessuna puntata · il giocatore iniziale apre il round.';
+        liarDiceCurrentBid.textContent = 'Nessuna puntata attiva';
       }
       liarDiceTurn.textContent = GameState.liarPhase === 'bidding'
-        ? `${isMyBid ? 'È il tuo turno.' : `Turno di ${getPlayerName(GameState.activePlayer)}.`}`
+        ? `${isMyBid ? '👉 È il tuo turno di puntare o dubitare!' : `In attesa di ${getPlayerName(GameState.activePlayer)}...`}`
         : '';
 
       liarDiceHistory.replaceChildren();
       const recentBets = (GameState.liarBets || []).slice(0, 5);
-      liarDiceHistory.classList.toggle('hidden', recentBets.length === 0);
-      recentBets.forEach(bet => {
-        const entry = document.createElement('p');
-        entry.className = 'text-[11px] text-zinc-400';
-        entry.textContent = `${bet.playerName}: ${bet.quantity} ${bet.quantity === 1 ? 'dado' : 'dadi'} di ${bet.face}`;
-        liarDiceHistory.appendChild(entry);
-      });
+      if (recentBets.length === 0) {
+        liarDiceHistory.innerHTML = '<p class="text-xs text-zinc-500 italic">Nessuna puntata in questo round.</p>';
+      } else {
+        recentBets.forEach(bet => {
+          const entry = document.createElement('div');
+          entry.className = 'text-xs text-zinc-300 flex justify-between border-b border-zinc-900 pb-1';
+          entry.innerHTML = `<span class="font-bold" style="color: ${getPlayerColor(GameState.playerIds[bet.playerIndex])}">${bet.playerName}</span> <span class="text-amber-300">${bet.quantity}x dado di ${bet.face}</span>`;
+          liarDiceHistory.appendChild(entry);
+        });
+      }
 
       liarDicePlayers.replaceChildren();
       for (let i = 1; i <= GameState.numPlayers; i++) {
         const card = document.createElement('div');
         const diceCount = GameState.liarDiceCounts[i] || 0;
         const playerRolled = Array.isArray(GameState.liarHands && GameState.liarHands[i]);
-        const inRound = participants.includes(i);
-        card.className = `flex items-center justify-between gap-2 rounded-xl border p-2 text-xs ${
+        card.className = `flex items-center justify-between gap-2 rounded-xl border p-2.5 text-xs ${
           i === GameState.activePlayer && GameState.liarPhase === 'bidding'
-            ? 'border-amber-400 bg-amber-500/10'
-            : diceCount > 0 ? 'border-zinc-800 bg-zinc-950/70' : 'border-zinc-900 bg-zinc-950/30 opacity-50'
+            ? 'border-purple-400 bg-purple-500/15'
+            : diceCount > 0 ? 'border-zinc-800 bg-zinc-950/70' : 'border-zinc-900 bg-zinc-950/30 opacity-40'
         }`;
         const identity = document.createElement('span');
         identity.className = 'font-bold truncate';
         identity.style.color = PLAYER_COLORS[(i - 1) % PLAYER_COLORS.length];
         identity.textContent = `${getPlayerName(i)}${GameState.playerIds[i] === myPlayerId ? ' (Tu)' : ''}`;
+        
         const status = document.createElement('span');
-        status.className = 'text-right text-zinc-300 whitespace-nowrap';
+        status.className = 'text-right text-zinc-300 whitespace-nowrap font-medium';
         status.textContent = diceCount === 0
-          ? 'Eliminato'
-          : `${diceCount} ${diceCount === 1 ? 'dado' : 'dadi'} · ${
-            GameState.liarPhase === 'result' || GameState.liarPhase === 'finished'
-              ? 'mano rivelata'
-              : playerRolled && inRound ? 'mano coperta'
-                : GameState.liarPhase === 'roll' && (participants.length === 0 || inRound)
-                  ? i === GameState.activePlayer ? 'tocca a lui' : 'in attesa'
-                  : GameState.liarPhase === 'roll' ? 'round successivo' : 'in attesa del tiro'
-          }`;
+          ? 'Eliminato ❌'
+          : `${diceCount} dadi 🎲`;
         card.append(identity, status);
         liarDicePlayers.appendChild(card);
       }
@@ -1806,32 +1825,26 @@
       if (hasResult && GameState.liarResult) {
         const result = GameState.liarResult;
         const loserName = getPlayerName(result.loserIndex);
-        const lostDice = result.loserIndex === result.callerIndex ? 'chi ha dubitato' : 'chi ha puntato';
-        liarDiceResultText.textContent = `${result.actual} dadi con faccia ${result.bid.face} trovati su ${result.bid.quantity} dichiarati. Perde un dado ${lostDice}: ${loserName}${GameState.liarDiceCounts[result.loserIndex] === 0 ? ' (eliminato)' : ''}.`;
+        liarDiceResultText.textContent = `Rivelazione dadi: trovati ${result.actual} dadi con faccia ${result.bid.face} (dichiarati ${result.bid.quantity}). Perde 1 dado ${loserName}!`;
         Object.keys(result.hands || {}).forEach(index => {
-          const hand = document.createElement('span');
-          hand.className = 'rounded-lg bg-zinc-900 px-2 py-1';
-          hand.textContent = `${getPlayerName(Number(index))}: ${(result.hands[index] || []).join(' · ')}`;
-          liarDiceReveal.appendChild(hand);
+          const handBadge = document.createElement('div');
+          handBadge.className = 'rounded-lg bg-zinc-900 border border-zinc-800 px-3 py-1.5 text-xs';
+          handBadge.innerHTML = `<span class="font-bold" style="color: ${PLAYER_COLORS[(Number(index)-1)%PLAYER_COLORS.length]}">${getPlayerName(Number(index))}:</span> [ ${(result.hands[index] || []).join(', ')} ]`;
+          liarDiceReveal.appendChild(handBadge);
         });
       } else if (GameState.liarPhase === 'finished') {
         const winner = alivePlayers[0];
         liarDiceResultText.textContent = winner
-          ? `${getPlayerName(winner)} vince la partita!`
+          ? `🏆 ${getPlayerName(winner)} vince la partita con puntate!`
           : 'Partita terminata.';
       } else {
         liarDiceResultText.textContent = '';
       }
       btnContinueLiarRound.classList.toggle('hidden', GameState.liarPhase !== 'result' || !isMyTurn());
-      if (GameState.liarPhase === 'finished') {
-        liarDiceResult.classList.remove('hidden');
-        liarDiceResultText.textContent = alivePlayers[0]
-          ? `${getPlayerName(alivePlayers[0])} vince la partita!`
-          : 'Partita terminata.';
-      }
-
+      
       btnOpenLiarBid.classList.toggle('hidden', !isMyBid || !liarBidModal.classList.contains('hidden'));
-      btnCallLiar.classList.toggle('hidden', !GameState.liarCurrentBid);
+      btnCallLiar.classList.toggle('hidden', !GameState.liarCurrentBid || !isMyBid);
+      
       if (!isMyBid) {
         liarBidModal.classList.add('hidden');
         activeLiarBidModalKey = null;
@@ -1842,7 +1855,9 @@
         liarBidFace.value = GameState.liarCurrentBid ? String(GameState.liarCurrentBid.face) : '1';
         liarBidError.classList.add('hidden');
       }
-      if (isMyBid && dismissedLiarBidModalKey !== myTurnKey) liarBidModal.classList.remove('hidden');
+      if (isMyBid && dismissedLiarBidModalKey !== myTurnKey && liarBidModal.classList.contains('hidden') === false) {
+        // Mantiene aperta se attiva
+      }
     }
 
     function updateUI() {
@@ -2201,7 +2216,7 @@
       sound.playDiceRoll();
       triggerHaptic(40);
       updateUI();
-      saveStateToCloud(); // <-- NON BLOCCANTE
+      saveStateToCloud();
 
       const indicesToRoll = [];
       GameState.dice.forEach((d, idx) => {
@@ -2596,7 +2611,6 @@
       });
     }
 
-    // GESTIONE ACCESSO E RIENTRO
     async function joinRoomProcess(name, code, targetScoreFromInput, isPageReload = false) {
       roomCode = code;
 
@@ -2604,7 +2618,6 @@
         let response = await supabaseClient.from('rooms').select('*').eq('code', roomCode).maybeSingle();
 
         if (response.error) {
-          console.error("Errore lettura stanza:", response.error);
           alert(`Errore durante la connessione alla stanza: ${response.error.message}`);
           return false;
         }
@@ -2618,7 +2631,6 @@
           
           let insertRes = await supabaseClient.from('rooms').insert([{ code: roomCode, state: GameState }]);
           if (insertRes.error) {
-            console.error("Errore creazione stanza:", insertRes.error);
             alert(`Errore durante la creazione della stanza: ${insertRes.error.message}`);
             return false;
           }
@@ -2764,7 +2776,6 @@
         updateUI();
         return true;
       } catch (err) {
-        console.error("Errore durante l'accesso alla stanza:", err);
         const errorMessage = err instanceof Error ? err.message : String(err);
         alert(`Errore durante l'accesso alla stanza: ${errorMessage}`);
         return false;
@@ -2796,7 +2807,6 @@
       });
     }
 
-    // GESTIONE NUOVA MODALE EDIT GIOCATORI SENZA RIAVVIO
     if (roomBadge) {
       roomBadge.addEventListener('click', () => {
         if (!roomCode) return;
@@ -2913,13 +2923,11 @@
       btnOpenLiarBid.addEventListener('click', () => {
         if (GameState.liarPhase === 'bidding' && isMyTurn()) {
           liarBidModal.classList.remove('hidden');
-          btnOpenLiarBid.classList.add('hidden');
         }
       });
       btnCloseLiarBid.addEventListener('click', () => {
         dismissedLiarBidModalKey = activeLiarBidModalKey;
         liarBidModal.classList.add('hidden');
-        btnOpenLiarBid.classList.toggle('hidden', !(GameState.liarPhase === 'bidding' && isMyTurn()));
       });
 
       btnInherit.addEventListener('click', () => {
@@ -3018,19 +3026,11 @@
       });
     };
 
-
-    // Registrazione del Service Worker per PWABuilder
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js')
-        .then((reg) => {
-          console.log('Service Worker registrato con successo:', reg.scope);
-        })
-        .catch((err) => {
-          console.error('Registrazione Service Worker fallita:', err);
-        });
-    });
-  }
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      });
+    }
   </script>
 </body>
 </html>
