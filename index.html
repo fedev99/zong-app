@@ -33,7 +33,6 @@
     }
     .font-display { font-family: 'Outfit', sans-serif; }
 
-    /* Banner per assenza di connessione */
     .offline-banner {
       background-color: #ef4444;
       color: white;
@@ -49,7 +48,6 @@
       transition: all 0.3s ease;
     }
 
-    /* 3D Dice Perspective and Cube Styles */
     .dice-scene {
       perspective: 700px;
       width: 68px;
@@ -168,12 +166,10 @@
 </head>
 <body class="min-h-screen flex flex-col justify-between overflow-x-hidden p-2 sm:p-4">
 
-  <!-- BANNER CONNESSIONE DEBOLE / ASSENTE -->
   <div id="offlineNotice" class="offline-banner hidden">
     ⚠️ Connessione debole o assente. Salvataggio in background...
   </div>
 
-  <!-- POP-UP NOTIFICA -->
   <div id="quickToast" class="fixed top-5 left-1/2 -translate-x-1/2 z-[100] hidden pointer-events-none">
     <div id="toastContent" class="px-4 py-2.5 rounded-2xl bg-zinc-900/95 border text-xs sm:text-sm font-bold shadow-2xl backdrop-blur-md flex items-center gap-2.5">
       <span id="toastIcon">🔥</span>
@@ -181,7 +177,6 @@
     </div>
   </div>
 
-  <!-- MODALE LOBBY STANZA ONLINE -->
   <div id="roomModal" class="fixed inset-0 bg-zinc-950/95 backdrop-blur-md z-50 flex items-center justify-center p-4">
     <div class="bg-zinc-900 border border-zinc-700 rounded-3xl p-6 max-w-sm w-full shadow-2xl text-center">
       <div class="w-14 h-14 mx-auto mb-3 rounded-2xl bg-gradient-to-br from-red-300 to-red-600 flex items-center justify-center shadow-lg shadow-red-500/25 text-zinc-950 font-black text-2xl font-display">Z</div>
@@ -217,7 +212,6 @@
     </div>
   </div>
 
-  <!-- MODALE MODIFICA GIOCATORI ATTUALI (Senza riavviare) -->
   <div id="editPlayersModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-zinc-900 border border-zinc-700 rounded-2xl p-5 max-w-sm w-full text-center">
       <div class="flex items-center gap-2 mb-2 text-blue-400 justify-center">
@@ -234,7 +228,6 @@
     </div>
   </div>
 
-  <!-- MODALE SELEZIONE GIOCATORI NUOVA PARTITA -->
   <div id="newGameModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-zinc-900 border border-zinc-700 rounded-2xl p-5 max-w-sm w-full text-center">
         <div class="flex items-center gap-2 mb-2 text-red-400 justify-center">
@@ -258,7 +251,6 @@
     </div>
   </div>
 
-  <!-- MODALE PUNTEGGIO MASSIMO -->
   <div id="targetScoreModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-zinc-900 border border-zinc-700 rounded-2xl p-5 max-w-xs w-full shadow-2xl">
       <div class="flex items-center gap-2 mb-2 text-amber-400">
@@ -282,7 +274,6 @@
     </div>
   </div>
 
-  <!-- MODALE RECORD (Doppia Classifica) -->
   <div id="recordsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-zinc-900 border border-zinc-700 rounded-2xl p-5 max-w-sm w-full max-h-[85vh] flex flex-col">
       <div class="flex items-center justify-between pb-2 border-b border-zinc-800 mb-3">
@@ -322,7 +313,7 @@
       </div>
     </div>
 
-    <!-- Actions Navbar (Consapevole e Uniforme) -->
+    <!-- Actions Navbar Uniformi e Corrette -->
     <div class="flex items-center gap-1.5 sm:gap-2">
       <button id="btnSound" class="p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300">
         <i data-lucide="volume-2" class="w-4 h-4"></i>
@@ -361,43 +352,47 @@
   <!-- Main Game Area -->
   <main class="w-full max-w-5xl mx-auto flex-1 flex flex-col gap-3 sm:gap-5 justify-center py-2">
 
-    <!-- SEZIONE MODALITÀ CON PUNTATE (Liar's Dice) MIGLIORATA -->
+    <!-- SEZIONE MODALITÀ CON PUNTATE CORRETTA CON TAVOLO IN FELTRO E DADI 3D COERENTI -->
     <section id="liarDiceArea" class="hidden rounded-3xl bg-zinc-900/90 border border-purple-500/30 p-4 sm:p-6 space-y-4 shadow-xl">
       <div class="flex items-start justify-between gap-3 border-b border-zinc-800 pb-3">
         <div>
           <h2 class="text-xl font-black text-purple-300 font-display flex items-center gap-2">
-            <i data-lucide="dice-5" class="w-5 h-5 text-purple-400"></i> Modalità con Puntate
+            <i data-lucide="dices" class="w-5 h-5 text-purple-400"></i> Modalità con Puntate (Liar's Dice)
           </h2>
           <p id="liarDiceStatus" class="text-xs text-zinc-400 mt-1">In attesa dei giocatori...</p>
         </div>
         <span id="liarDiceRound" class="px-2.5 py-1 rounded-full bg-purple-950/80 border border-purple-500/40 text-[11px] font-bold text-purple-300 whitespace-nowrap">Round 1</span>
       </div>
 
-      <!-- Tavolo e Dadi Personali (Mantenuti uguali alle altre modalità ma nascosti agli altri) -->
-      <div class="felt-table rounded-2xl p-4 sm:p-6 relative overflow-hidden flex flex-col items-center justify-center min-h-[200px]">
-        <div class="absolute inset-0 pointer-events-none flex items-center justify-center opacity-5 select-none font-display font-black text-6xl tracking-widest text-white uppercase">
-          ZONG BLUFF
+      <!-- Tavolo in feltro e dadi 3D personali (nascosti agli avversari, proporzioni identiche) -->
+      <div class="felt-table rounded-3xl p-4 sm:p-8 relative overflow-hidden flex flex-col items-center justify-center min-h-[260px] sm:min-h-[310px]">
+        <div class="absolute inset-0 pointer-events-none flex items-center justify-center opacity-5 select-none font-display font-black text-8xl sm:text-[13rem] tracking-widest text-white uppercase">
+          ZONG
         </div>
-        <p class="text-[10px] text-amber-300 uppercase font-bold tracking-wider mb-2 z-10 flex items-center gap-1">
-          <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i> La tua mano di dadi (Nascosta agli avversari)
-        </p>
-        <div id="liarDiceHand" class="flex flex-wrap justify-center items-center gap-3 z-10 min-h-[75px]"></div>
-        
-        <button id="btnRollLiarDice" class="mt-4 px-6 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-black text-xs sm:text-sm shadow-lg transition active:scale-95 z-10 flex items-center gap-2">
-          <i data-lucide="refresh-cw" class="w-4 h-4"></i> Tira i tuoi dadi nel bicchiere
+
+        <div class="mb-2 px-3 py-1 rounded-full text-xs font-semibold bg-zinc-900/90 border border-purple-500/60 text-purple-200 flex items-center gap-2 shadow z-10">
+          <i data-lucide="lock" class="w-3.5 h-3.5 text-purple-400"></i>
+          <span>Il tuo bicchiere (Dadi nascosti agli altri)</span>
+        </div>
+
+        <div id="liarDiceHand" class="flex flex-wrap justify-center items-center gap-3 sm:gap-5 z-10 py-1 min-h-[84px]"></div>
+
+        <button id="btnRollLiarDice" class="mt-4 py-2.5 px-6 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-black text-xs sm:text-sm font-display shadow-lg active:scale-95 transition z-10 flex items-center gap-2">
+          <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+          <span>Tira i tuoi dadi</span>
         </button>
       </div>
 
-      <!-- Pannello Puntata Attuale e Azioni -->
+      <!-- Pannello Puntata e Azioni -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div class="rounded-2xl bg-zinc-950 border border-zinc-800 p-3.5 flex flex-col justify-between">
           <div>
             <p class="text-[10px] text-zinc-500 uppercase font-bold tracking-wider">Puntata Attuale sul Tavolo</p>
-            <p id="liarDiceCurrentBid" class="text-sm text-amber-300 font-bold mt-1.5 flex items-center gap-1.5">Nessuna puntata attiva</p>
+            <p id="liarDiceCurrentBid" class="text-sm text-amber-300 font-bold mt-1.5">Nessuna puntata attiva</p>
             <p id="liarDiceTurn" class="text-xs text-zinc-400 mt-1"></p>
           </div>
           <div class="mt-3 flex gap-2">
-            <button id="btnOpenLiarBid" class="hidden flex-1 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-zinc-950 font-black text-xs sm:text-sm shadow transition">Fai o Rilancia Puntata</button>
+            <button id="btnOpenLiarBid" class="hidden flex-1 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-zinc-950 font-black text-xs sm:text-sm shadow transition">Fai / Rilancia Puntata</button>
             <button id="btnCallLiar" class="hidden flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-black text-xs sm:text-sm shadow transition">DUBITO! 🕵️‍♂️</button>
           </div>
         </div>
@@ -405,18 +400,16 @@
         <div class="rounded-2xl bg-zinc-950 border border-zinc-800 p-3.5 max-h-36 overflow-y-auto">
           <p class="text-[10px] text-zinc-500 uppercase font-bold tracking-wider mb-1.5 sticky top-0 bg-zinc-950 py-0.5">Ultime Puntate</p>
           <div id="liarDiceHistory" class="space-y-1">
-            <p class="text-xs text-zinc-500 italic">Nessuna cronologia in questo round.</p>
+            <p class="text-xs text-zinc-500 italic">Nessuna puntata in questo round.</p>
           </div>
         </div>
       </div>
 
-      <!-- Griglia Giocatori e Stato Dadi Rimasti -->
       <div>
         <p class="text-[10px] text-zinc-500 uppercase font-bold tracking-wider mb-2">Stato Giocatori & Dadi in Gara</p>
-        <div id="liarDicePlayers" class="grid grid-cols-2 sm:grid-cols-3 gap-2"></div>
+        <div id="liarDicePlayers" class="grid grid-cols-1 sm:grid-cols-2 gap-2"></div>
       </div>
 
-      <!-- Risultato Dubbio -->
       <div id="liarDiceResult" class="hidden rounded-2xl bg-amber-950/40 border border-amber-500/40 p-4 text-center">
         <p id="liarDiceResultText" class="text-sm text-amber-200 font-bold"></p>
         <div id="liarDiceReveal" class="flex flex-wrap justify-center gap-2 mt-3 text-xs text-zinc-300"></div>
@@ -426,10 +419,8 @@
 
     <!-- SEZIONE GIOCO NORMALE / CON SCALE -->
     <div id="zongGameArea" class="flex flex-col gap-3 sm:gap-5">
-    <!-- Players Cards Container -->
     <div id="playersContainer" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2"></div>
 
-    <!-- Current Turn Status -->
     <div class="p-3 sm:p-4 rounded-2xl bg-zinc-900/90 border border-amber-500/30 flex justify-between items-center relative overflow-hidden">
       <div id="entryOverlay" class="absolute inset-0 bg-red-950/80 backdrop-blur-[2px] hidden items-center justify-center z-10 transition-colors duration-300">
         <div class="flex items-center gap-2 text-red-300 font-bold text-xs sm:text-sm" id="entryOverlayText">
@@ -588,7 +579,7 @@
     </div>
   </main>
 
-  <!-- MODALE PUNTATA MIGLIORATA (Liar's Bid Modal) -->
+  <!-- MODALE PUNTATA LIAR'S DICE -->
   <div id="liarBidModal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-zinc-900 border border-purple-500/50 rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4">
       <div class="flex items-center justify-between border-b border-zinc-800 pb-2">
@@ -703,9 +694,6 @@
   </div>
 
   <script>
-    // -------------------------------------------------------------
-    // GESTIONE COOKIE & PERSISTENZA UTENTE
-    // -------------------------------------------------------------
     function setCookie(name, value, days = 30) {
       const d = new Date();
       d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
@@ -730,9 +718,6 @@
       return "";
     }
 
-    // -------------------------------------------------------------
-    // FUNZIONE CASUALE CRITTOGRAFICAMENTE SICURA
-    // -------------------------------------------------------------
     function getRandomDiceRoll() {
       const array = new Uint32Array(1);
       const limit = Math.floor(4294967296 / 6) * 6;
@@ -742,9 +727,6 @@
       return (array[0] % 6) + 1;
     }
 
-    // -------------------------------------------------------------
-    // CONFIGURAZIONE SUPABASE E RETE ADVANCED
-    // -------------------------------------------------------------
     const SUPABASE_URL = 'https://yguyjlgcdzoyoxnxcfsc.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlndXlqbGdjZHpveW94bnhjZnNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0NDY2MDAsImV4cCI6MjEwOTAyMjYwMH0.YKwG4zdEdfAtDuB7aCH1r_DpEaMoQslJMAAw3QCzL7U';
     
@@ -763,7 +745,6 @@
     localStorage.setItem("zong_my_player_id", myPlayerId);
 
     let lastEventId = null;
-
     const writeQueue = [];
     let isProcessingQueue = false;
 
@@ -784,7 +765,7 @@
       if (!roomCode) return;
       writeQueue.push({ roomCode: roomCode, statePayload: JSON.parse(JSON.stringify(GameState)) });
       if (navigator.onLine) {
-        syncWriteQueue().catch(e => console.error("Errore sync in background:", e));
+        syncWriteQueue().catch(e => {});
       } else {
         updateConnectionStatus();
       }
@@ -848,15 +829,7 @@
           navigator.vibrate(duration);
           return;
         }
-        if (Array.isArray(duration)) {
-          let t = 0;
-          duration.forEach((ms, i) => {
-            if (i % 2 === 0) setTimeout(iosTick, t);
-            t += ms;
-          });
-        } else {
-          iosTick();
-        }
+        iosTick();
       } catch (e) {}
     }
 
@@ -1417,7 +1390,7 @@
 
     function openEditPlayersModal() {
       if (GameState.mode === 'liars-dice') {
-        alert("In modalità con puntate i partecipanti non si possono modificare durante la partita. Avvia una nuova partita per scegliere i giocatori.");
+        alert("In modalità con puntate i partecipanti non si possono modificare durante la partita.");
         return;
       }
       editPlayerSelectList.innerHTML = '';
@@ -1619,7 +1592,7 @@
     function makeLiarBid(quantity, face) {
       if (GameState.mode !== 'liars-dice' || GameState.liarPhase !== 'bidding' || !isMyTurn()) return false;
       if (!Number.isInteger(quantity) || quantity < 1 || !Number.isInteger(face) || face < 1 || face > 6) {
-        liarBidError.textContent = 'Inserisci una quantità intera positiva e una faccia da 1 a 6.';
+        liarBidError.textContent = 'Inserisci una quantità valida e una faccia da 1 a 6.';
         liarBidError.classList.remove('hidden');
         return false;
       }
@@ -1629,7 +1602,7 @@
         quantity < previousBid.quantity ||
         quantity === previousBid.quantity && face <= previousBid.face
       )) {
-        liarBidError.textContent = 'La puntata deve aumentare la quantità o, a quantità uguale, la faccia.';
+        liarBidError.textContent = 'La puntata deve aumentare la quantità o, a parità di quantità, la faccia.';
         liarBidError.classList.remove('hidden');
         return false;
       }
@@ -1717,26 +1690,29 @@
       liarDiceHand.replaceChildren();
 
       if (Array.isArray(myHand)) {
-        myHand.forEach((val) => {
+        myHand.forEach((val, idx) => {
           const wrapper = document.createElement('div');
-          wrapper.className = "dice-container";
+          wrapper.className = "dice-container transition-all duration-200";
           wrapper.innerHTML = `
-            <div class="dice-scene" style="width: 56px; height: 56px;">
-              <div class="cube">
-                <div class="cube-face f${val}" style="transform: rotateY(0deg) translateZ(28px);">
-                  <div class="pip col-start-2 row-start-2"></div>
-                </div>
+            <div class="dice-scene">
+              <div class="cube" id="liar-cube-${idx}">
+                <div class="cube-face f1"><div class="pip col-start-2 row-start-2"></div></div>
+                <div class="cube-face f2"><div class="pip col-start-1 row-start-1"></div><div class="pip col-start-3 row-start-3"></div></div>
+                <div class="cube-face f3"><div class="pip col-start-1 row-start-1"></div><div class="pip col-start-2 row-start-2"></div><div class="pip col-start-3 row-start-3"></div></div>
+                <div class="cube-face f4"><div class="pip col-start-1 row-start-1"></div><div class="pip col-start-3 row-start-1"></div><div class="pip col-start-1 row-start-3"></div><div class="pip col-start-3 row-start-3"></div></div>
+                <div class="cube-face f5"><div class="pip col-start-1 row-start-1"></div><div class="pip col-start-3 row-start-1"></div><div class="pip col-start-2 row-start-2"></div><div class="pip col-start-1 row-start-3"></div><div class="pip col-start-3 row-start-3"></div></div>
+                <div class="cube-face f6"><div class="pip col-start-1 row-start-1"></div><div class="pip col-start-1 row-start-2"></div><div class="pip col-start-1 row-start-3"></div><div class="pip col-start-3 row-start-1"></div><div class="pip col-start-3 row-start-2"></div><div class="pip col-start-3 row-start-3"></div></div>
               </div>
             </div>
+            <div class="dice-sub text-[9px] text-center font-bold text-purple-400 mt-1 uppercase">Il tuo dado</div>
           `;
-          // Sfrutta la grafica 3D del dado reale per mostrare la faccia nascosta del giocatore
-          applyCubeRotation(wrapper.querySelector('.cube'), val);
           liarDiceHand.appendChild(wrapper);
+          applyCubeRotation(wrapper.querySelector('.cube'), val);
         });
       } else {
         const hint = document.createElement('span');
-        hint.className = 'text-xs text-zinc-400 italic text-center px-4';
-        hint.textContent = myIndex > 0 ? 'Clicca il pulsante sotto per tirare i dadi nel tuo bicchiere.' : 'Entra nella stanza per partecipare alla partita.';
+        hint.className = 'text-xs text-zinc-400 italic text-center px-4 z-10';
+        hint.textContent = myIndex > 0 ? 'Clicca il pulsante sotto per tirare i tuoi dadi nel tuo bicchiere.' : 'Entra nella stanza per partecipare.';
         liarDiceHand.appendChild(hint);
       }
 
@@ -1757,24 +1733,22 @@
       if (GameState.liarPhase === 'roll') {
         const rolledCount = participants.filter(index => Array.isArray(GameState.liarHands[index])).length;
         liarDiceStatus.textContent = alivePlayers.length < 2
-          ? 'Servono almeno 2 giocatori ancora in gara per iniziare.'
-          : participants.length > 0 && !isParticipant
-            ? 'Round già iniziato. Potrai tirare i dadi dal prossimo round.'
+          ? 'Servono almeno 2 giocatori ancora in gara.'
           : participants.length === 0
             ? `Ogni giocatore tira i propri dadi. Inizia ${getPlayerName(GameState.activePlayer)}.`
-            : `Dadi tirati: ${rolledCount} su ${participants.length}. Ora tocca a ${getPlayerName(GameState.activePlayer)}.`;
+            : `Dadi tirati: ${rolledCount} su ${participants.length}. Turno di ${getPlayerName(GameState.activePlayer)}.`;
       } else if (GameState.liarPhase === 'bidding') {
         liarDiceStatus.textContent = `Turno di ${getPlayerName(GameState.activePlayer)} · fai una puntata o dubita.`;
       } else if (GameState.liarPhase === 'result') {
-        liarDiceStatus.textContent = 'Dadi scoperti: il round è terminato.';
+        liarDiceStatus.textContent = 'Dadi scoperti: round completato.';
       } else {
         const winner = alivePlayers[0];
-        liarDiceStatus.textContent = winner ? `${getPlayerName(winner)} vince: è l'ultimo giocatore rimasto.` : 'Partita terminata.';
+        liarDiceStatus.textContent = winner ? `🏆 ${getPlayerName(winner)} ha vinto la partita con puntate!` : 'Partita terminata.';
       }
 
       if (GameState.liarCurrentBid) {
         const bid = GameState.liarCurrentBid;
-        liarDiceCurrentBid.textContent = `${bid.quantity} ${bid.quantity === 1 ? 'dado' : 'dadi'} con faccia ${bid.face} (Puntato da ${getPlayerName(bid.playerIndex)})`;
+        liarDiceCurrentBid.textContent = `${bid.quantity} ${bid.quantity === 1 ? 'dado' : 'dadi'} con faccia ${bid.face} (Dichiarati da ${getPlayerName(bid.playerIndex)})`;
       } else {
         liarDiceCurrentBid.textContent = 'Nessuna puntata attiva';
       }
@@ -1799,7 +1773,6 @@
       for (let i = 1; i <= GameState.numPlayers; i++) {
         const card = document.createElement('div');
         const diceCount = GameState.liarDiceCounts[i] || 0;
-        const playerRolled = Array.isArray(GameState.liarHands && GameState.liarHands[i]);
         card.className = `flex items-center justify-between gap-2 rounded-xl border p-2.5 text-xs ${
           i === GameState.activePlayer && GameState.liarPhase === 'bidding'
             ? 'border-purple-400 bg-purple-500/15'
@@ -1812,9 +1785,7 @@
         
         const status = document.createElement('span');
         status.className = 'text-right text-zinc-300 whitespace-nowrap font-medium';
-        status.textContent = diceCount === 0
-          ? 'Eliminato ❌'
-          : `${diceCount} dadi 🎲`;
+        status.textContent = diceCount === 0 ? 'Eliminato ❌' : `${diceCount} dadi 🎲`;
         card.append(identity, status);
         liarDicePlayers.appendChild(card);
       }
@@ -1825,7 +1796,7 @@
       if (hasResult && GameState.liarResult) {
         const result = GameState.liarResult;
         const loserName = getPlayerName(result.loserIndex);
-        liarDiceResultText.textContent = `Rivelazione dadi: trovati ${result.actual} dadi con faccia ${result.bid.face} (dichiarati ${result.bid.quantity}). Perde 1 dado ${loserName}!`;
+        liarDiceResultText.textContent = `Risultato: trovati ${result.actual} dadi con faccia ${result.bid.face} (dichiarati ${result.bid.quantity}). Perde 1 dado ${loserName}!`;
         Object.keys(result.hands || {}).forEach(index => {
           const handBadge = document.createElement('div');
           handBadge.className = 'rounded-lg bg-zinc-900 border border-zinc-800 px-3 py-1.5 text-xs';
@@ -1834,9 +1805,7 @@
         });
       } else if (GameState.liarPhase === 'finished') {
         const winner = alivePlayers[0];
-        liarDiceResultText.textContent = winner
-          ? `🏆 ${getPlayerName(winner)} vince la partita con puntate!`
-          : 'Partita terminata.';
+        liarDiceResultText.textContent = winner ? `🏆 ${getPlayerName(winner)} vince la partita con puntate!` : 'Partita terminata.';
       } else {
         liarDiceResultText.textContent = '';
       }
@@ -1855,18 +1824,11 @@
         liarBidFace.value = GameState.liarCurrentBid ? String(GameState.liarCurrentBid.face) : '1';
         liarBidError.classList.add('hidden');
       }
-      if (isMyBid && dismissedLiarBidModalKey !== myTurnKey && liarBidModal.classList.contains('hidden') === false) {
-        // Mantiene aperta se attiva
-      }
     }
 
     function updateUI() {
-      if (newGameModal && !newGameModal.classList.contains('hidden')) {
-        newGameModal.classList.add('hidden');
-      }
-      if (editPlayersModal && !editPlayersModal.classList.contains('hidden')) {
-        editPlayersModal.classList.add('hidden');
-      }
+      if (newGameModal && !newGameModal.classList.contains('hidden')) newGameModal.classList.add('hidden');
+      if (editPlayersModal && !editPlayersModal.classList.contains('hidden')) editPlayersModal.classList.add('hidden');
 
       TARGET_SCORE = GameState.targetScore || TARGET_SCORE;
       if (targetScoreHeaderLabel) {
@@ -2169,6 +2131,7 @@
     }
 
     function applyCubeRotation(cubeEl, faceNumber) {
+      if (!cubeEl) return;
       const rot = faceRotations[faceNumber] || { x: 0, y: 0 };
       cubeEl.style.transform = `rotateX(${rot.x}deg) rotateY(${rot.y}deg)`;
     }
