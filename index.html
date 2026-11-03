@@ -197,9 +197,9 @@
           <div class="grid grid-cols-3 gap-2">
             <button id="btnModeNormal" type="button" data-room-mode="normal" aria-pressed="true" class="py-2 rounded-xl border border-red-400 bg-red-500/15 text-red-200 text-xs font-bold transition">Normale</button>
             <button id="btnModeScales" type="button" data-room-mode="with-scales" aria-pressed="false" class="py-2 rounded-xl border border-zinc-700 bg-zinc-950 text-zinc-400 text-xs font-bold transition">Con scale</button>
-            <button id="btnModeLiarsDice" type="button" data-room-mode="liars-dice" aria-pressed="false" class="py-2 rounded-xl border border-zinc-700 bg-zinc-950 text-zinc-400 text-xs font-bold transition">Con puntate</button>
+            <button id="btnModeLiarsDice" type="button" data-room-mode="liars-dice" aria-pressed="false" class="py-2 rounded-xl border border-zinc-700 bg-zinc-950 text-zinc-400 text-xs font-bold transition">Liar's Dice</button>
           </div>
-          <p class="mt-1 text-[10px] text-zinc-500">Con scale: 3 dadi = 800 pt · 4 dadi = 1.000 pt. Con puntate: bluff, dadi nascosti e dichiarazioni.</p>
+          <p class="mt-1 text-[10px] text-zinc-500">Con scale: 3 dadi = 800 pt · 4 dadi = 1.000 pt. Liar's Dice: bluff, dadi nascosti e dichiarazioni.</p>
           <p id="roomModeNotice" class="hidden mt-1 text-[10px] text-amber-300"></p>
         </div>
         <div id="containerTargetScore" class="hidden">
@@ -352,12 +352,12 @@
   <!-- Main Game Area -->
   <main class="w-full max-w-5xl mx-auto flex-1 flex flex-col gap-3 sm:gap-5 justify-center py-2">
 
-    <!-- SEZIONE MODALITÀ CON PUNTATE CORRETTA CON TAVOLO IN FELTRO E DADI 3D COERENTI -->
+    <!-- SEZIONE MODALITÀ LIAR'S DICE CORRETTA CON TAVOLO IN FELTRO E DADI 3D COERENTI -->
     <section id="liarDiceArea" class="hidden rounded-3xl bg-zinc-900/90 border border-purple-500/30 p-4 sm:p-6 space-y-4 shadow-xl">
       <div class="flex items-start justify-between gap-3 border-b border-zinc-800 pb-3">
         <div>
           <h2 class="text-xl font-black text-purple-300 font-display flex items-center gap-2">
-            <i data-lucide="dices" class="w-5 h-5 text-purple-400"></i> Modalità con Puntate (Liar's Dice)
+            <i data-lucide="dices" class="w-5 h-5 text-purple-400"></i>Liar's Dice Game
           </h2>
           <p id="liarDiceStatus" class="text-xs text-zinc-400 mt-1">In attesa dei giocatori...</p>
         </div>
@@ -365,10 +365,13 @@
       </div>
 
       <!-- Tavolo in feltro e dadi 3D personali (nascosti agli avversari, proporzioni identiche) -->
-      <div class="felt-table rounded-3xl p-4 sm:p-8 relative overflow-hidden flex flex-col items-center justify-center min-h-[260px] sm:min-h-[310px]">
-        <div class="absolute inset-0 pointer-events-none flex items-center justify-center opacity-5 select-none font-display font-black text-8xl sm:text-[13rem] tracking-widest text-white uppercase">
-          ZONG
-        </div>
+   <div class="felt-table rounded-3xl p-4 sm:p-8 relative overflow-hidden flex flex-col items-center justify-center min-h-[260px] sm:min-h-[310px]">
+  <!-- Scritta di sfondo su due righe centrata -->
+  <div class="absolute inset-0 pointer-events-none flex flex-col items-center justify-center opacity-5 select-none z-0">
+    <div class="font-display font-black text-6xl sm:text-8xl tracking-widest text-white uppercase text-center leading-tight">
+      LIAR'S<br />DICE
+    </div>
+  </div>
 
         <div class="mb-2 px-3 py-1 rounded-full text-xs font-semibold bg-zinc-900/90 border border-purple-500/60 text-purple-200 flex items-center gap-2 shadow z-10">
           <i data-lucide="lock" class="w-3.5 h-3.5 text-purple-400"></i>
@@ -649,36 +652,57 @@
 
   <!-- RULES MODAL -->
   <div id="rulesModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-zinc-900 border border-zinc-700 rounded-2xl p-5 max-w-md w-full max-h-[80vh] flex flex-col">
-      <div class="flex items-center justify-between pb-2 border-b border-zinc-800">
-        <div class="flex items-center gap-2">
-          <i data-lucide="book-open" class="w-5 h-5 text-purple-300"></i>
-          <h3 class="text-base font-bold text-purple-300 font-display">Regole ZONG (5 Dadi)</h3>
-        </div>
-        <button id="btnCloseRules" class="text-zinc-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+  <div class="bg-zinc-900 border border-zinc-700 rounded-2xl p-5 max-w-md w-full max-h-[80vh] flex flex-col">
+    <!-- Header Modal -->
+    <div class="flex items-center justify-between pb-2 border-b border-zinc-800">
+      <div class="flex items-center gap-2">
+        <i data-lucide="book-open" class="w-5 h-5 text-purple-300"></i>
+        <h3 id="rulesModalTitle" class="text-base font-bold text-purple-300 font-display">Regole</h3>
       </div>
-      <div class="overflow-y-auto space-y-3 py-3 text-xs text-zinc-300">
-        <p>• <strong>Singoli:</strong> 1 = 100 pt, 5 = 50 pt</p>
-        <p>• <strong>Tris:</strong> Tris di 1 = 1000 pt, Tris da 2 a 6 = valore x 100 pt</p>
-        <p>• <strong>Quaterna:</strong> 2x Tris | <strong>Cinquina:</strong> 4x Tris</p>
-        <p>• <strong>Scala (1-5 o 2-6):</strong> 1500 pt</p>
-        <p id="scaleModeRules" class="hidden">• <strong>Modalità Con scale:</strong> la scala da 3 dadi vale 800 pt e quella da 4 dadi 1000 pt. Le scale vengono calcolate nel punteggio quando il giocatore seleziona i dadi della scala validi con la possibilità di fare hot dice e ritirare tutti i dadi.</p>
-        
-        <div id="liarDiceRules" class="hidden space-y-2">
-          <p>• <strong>Liar's Dice (Perudo):</strong> Ogni giocatore parte con 5 dadi nascosti nel proprio bicchiere. L'obiettivo è essere l'ultimo giocatore con almeno un dado.</p>
-          <p>• <strong>Jolly (Gli '1'):</strong> I dadi con faccia "1" valgono come jolly e assumono il valore della puntata attuale (es. se punti sui 4, tutti gli 1 sul tavolo contano come 4).</p>
-          <p>• <strong>Puntate (Bluff):</strong> A turno, devi dichiarare quanti dadi di una determinata faccia ci sono complessivamente sul tavolo tra tutti i giocatori.</p>
-          <p>• <strong>Rilancio:</strong> Puoi rilanciare aumentando la quantità (es. da due 3 a tre 3) oppure aumentando la faccia a parità di quantità (es. da due 3 a due 4).</p>
-          <p>• <strong>Dubito:</strong> Invece di rilanciare, puoi dire "DUBITO!". Tutti i dadi vengono rivelati. Se il numero totale di dadi (inclusi gli 1) è inferiore alla puntata, chi ha puntato perde un dado. Se è pari o superiore, chi ha dubitato perde un dado.</p>
-        </div>
-
-        <p>• <strong>Apertura:</strong> Minimo 500 pt in un turno per registrare punti sul tabellone.</p>
-        <p>• <strong>✨ Sei Magico:</strong> Se resta 1 solo dado ed esce 6, non perdi con Zong! Guadagni 0 pt ma sblocchi l'Hot Dice rilanciando tutti i 5 dadi.</p>
-        <p>• <strong>✂️ Due Cinque:</strong> Uniscili per accantonare solo un 5 guadagnando 100 pt e tenendo l'altro libero per il tiro successivo.</p>
-      </div>
-      <button id="btnGotItRules" class="w-full py-2.5 rounded-xl bg-purple-300 text-zinc-950 font-bold text-xs mt-2">Chiudi</button>
+      <button id="btnCloseRules" class="text-zinc-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
     </div>
+
+    <!-- Body Scrollabile -->
+    <div class="overflow-y-auto space-y-3 py-3 text-xs text-zinc-300">
+      
+      <!-- 1. REGOLE ZONG NORMALE -->
+      <div id="zongNormalRules" class="hidden space-y-2">
+        <p><strong>Singoli:</strong> 1 = 100 pt, 5 = 50 pt</p>
+        <p><strong>Tris:</strong> Tris di 1 = 1000 pt, Tris da 2 a 6 = valore x 100 pt</p>
+        <p><strong>Quaterna:</strong> 2x Tris | <strong>Cinquina:</strong> 4x Tris</p>
+        <p><strong>Scala (1-5 o 2-6):</strong> 1500 pt</p>
+        <p><strong>Apertura:</strong> Minimo 500 pt in un turno per registrare punti sul tabellone.</p>
+        <p><strong>✨ Sei Magico:</strong> Se resta 1 solo dado ed esce 6, non perdi con Zong! Guadagni 0 pt ma sblocchi l'Hot Dice rilanciando tutti i 5 dadi.</p>
+        <p><strong>✂️ Due Cinque:</strong> Uniscili per accantonare solo un 5 guadagnando 100 pt e tenendo l'altro libero per il tiro successivo.</p>
+      </div>
+
+      <!-- 2. REGOLE ZONG CON SCALE -->
+      <div id="zongScalesRules" class="hidden space-y-2">
+        <p><strong>Singoli:</strong> 1 = 100 pt, 5 = 50 pt</p>
+        <p><strong>Tris:</strong> Tris di 1 = 1000 pt, Tris da 2 a 6 = valore x 100 pt</p>
+        <p><strong>Quaterna:</strong> 2x Tris | <strong>Cinquina:</strong> 4x Tris</p>
+        <p><strong>Scala (1-5 o 2-6):</strong> 1500 pt</p>
+        <p><strong>Modalità Con scale:</strong> La scala da 3 dadi vale 800 pt e quella da 4 dadi 1000 pt. Le scale vengono calcolate nel punteggio quando il giocatore seleziona i dadi della scala validi con la possibilità di fare hot dice e ritirare tutti i dadi.</p>
+        <p><strong>Apertura:</strong> Minimo 500 pt in un turno per registrare punti sul tabellone.</p>
+        <p><strong>✨ Sei Magico:</strong> Se resta 1 solo dado ed esce 6, non perdi con Zong! Guadagni 0 pt ma sblocchi l'Hot Dice rilanciando tutti i 5 dadi.</p>
+        <p><strong>✂️ Due Cinque:</strong> Uniscili per accantonare solo un 5 guadagnando 100 pt e tenendo l'altro libero per il tiro successivo.</p>
+      </div>
+
+      <!-- 3. REGOLE LIAR'S DICE -->
+      <div id="liarDiceRules" class="hidden space-y-2">
+        <p><strong>Obiettivo:</strong> Ogni giocatore parte con 5 dadi nascosti nel proprio bicchiere. Lo scopo è rimanere l'ultimo giocatore in gara con almeno un dado.</p>
+        <p><strong>Jolly (Gli '1'):</strong> I dadi con faccia "1" fungono da jolly e assumono il valore della puntata attuale (es. se punti sui 4, tutti gli 1 sul tavolo contano come 4). <em>Nota: se la puntata viene fatta direttamente sugli 1, valgono solo come 1.</em></p>
+        <p><strong>Puntate (Bluff):</strong> A turno, devi dichiarare quanti dadi di una determinata faccia pensi ci siano complessivamente sul tavolo considerando i dadi nascosti di tutti i giocatori.</p>
+        <p><strong>Rilancio:</strong> Nel tuo turno, puoi <em>rilanciare</em> aumentando la quantità di dadi (es. da "due 3" a "tre 3") oppure, mantenendo la stessa quantità, aumentando la faccia del dado (es. da "due 3" a "due 4").</p>
+        <p><strong>Dubito!:</strong> Invece di rilanciare, puoi esclamare "DUBITO!". Tutti i dadi dei giocatori vengono rivelati e contati. Se il numero totale di dadi (inclusi i jolly) è <em>inferiore</em> alla puntata, chi ha puntato perde un dado. Se il numero è <em>pari o superiore</em>, chi ha dubitato perde un dado.</p>
+        <p><strong>Svolgimento Turni:</strong> Chi perde un dado in un round sarà il primo a puntare nel round successivo. Se perdi tutti i dadi, sei eliminato.</p>
+      </div>
+
+    </div>
+    
+    <button id="btnGotItRules" class="w-full py-2.5 rounded-xl bg-purple-300 text-zinc-950 font-bold text-xs mt-2">Chiudi</button>
   </div>
+</div>
 
   <!-- LEADERBOARD MODAL -->
   <div id="leaderboardModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
@@ -749,6 +773,7 @@
     localStorage.setItem("zong_my_player_id", myPlayerId);
 
     let lastEventId = null;
+    let activeRoomChannel = null;
     const writeQueue = [];
     let isProcessingQueue = false;
 
@@ -767,7 +792,20 @@
 
     function saveStateToCloud() {
       if (!roomCode) return;
-      writeQueue.push({ roomCode: roomCode, statePayload: JSON.parse(JSON.stringify(GameState)) });
+      
+      const clonedState = JSON.parse(JSON.stringify(GameState));
+      writeQueue.push({ roomCode: roomCode, statePayload: clonedState });
+      
+      // BROADCAST ISTANTANEO: Aggiorna l'UI di tutti gli altri client in modo immediato per bypassare
+      // qualsiasi latenza o accodamento di scrittura sul DB. Evita la necessità di aggiornare manualmente.
+      if (activeRoomChannel) {
+        activeRoomChannel.send({
+          type: 'broadcast',
+          event: 'state_sync',
+          payload: { state: clonedState }
+        }).catch(() => {});
+      }
+
       if (navigator.onLine) {
         syncWriteQueue().catch(e => {});
       } else {
@@ -981,6 +1019,25 @@
       chatLogs: [],
       lastEvent: null
     };
+
+
+
+
+    function showRules(gameMode) {
+      const ruleSections = {
+        normal: { id: 'zongNormalRules', title: 'Regole ZONG (Normale)' },
+        'with-scales': { id: 'zongScalesRules', title: 'Regole ZONG (Con Scale)' },
+        'liars-dice': { id: 'liarDiceRules', title: "Regole Liar's Dice (Perudo)" }
+      };
+      const selectedRules = ruleSections[gameMode] || ruleSections.normal;
+
+      Object.values(ruleSections).forEach(({ id }) => {
+        document.getElementById(id).classList.add('hidden');
+      });
+      document.getElementById(selectedRules.id).classList.remove('hidden');
+      document.getElementById('rulesModalTitle').textContent = selectedRules.title;
+      document.getElementById('rulesModal').classList.remove('hidden');
+    }
 
     function showQuickToast(type, playerName) {
       const toastEl = document.getElementById('quickToast');
@@ -1205,8 +1262,6 @@
     const btnGotItRules = document.getElementById('btnGotItRules');
     const btnCloseRules = document.getElementById('btnCloseRules');
     const rulesModal = document.getElementById('rulesModal');
-    const scaleModeRules = document.getElementById('scaleModeRules');
-    const liarDiceRules = document.getElementById('liarDiceRules');
     const btnLeaderboard = document.getElementById('btnLeaderboard');
     const btnCloseLeaderboard = document.getElementById('btnCloseLeaderboard');
     const leaderboardModal = document.getElementById('leaderboardModal');
@@ -1348,7 +1403,7 @@
             const roomMode = normalizeRoomMode(data.state && data.state.mode);
             setRoomMode(roomMode);
             setRoomModeButtonsDisabled(true);
-            const roomModeName = roomMode === 'with-scales' ? 'Con scale' : roomMode === 'liars-dice' ? "Con puntate" : 'Normale';
+            const roomModeName = roomMode === 'with-scales' ? 'Con scale' : roomMode === 'liars-dice' ? "Liar's Dice" : 'Normale';
             roomModeNotice.textContent = `Stanza esistente: modalità ${roomModeName}.`;
             roomModeNotice.classList.remove('hidden');
           }
@@ -1393,10 +1448,6 @@
     }
 
     function openEditPlayersModal() {
-      if (GameState.mode === 'liars-dice') {
-        alert("In modalità con puntate i partecipanti non si possono modificare durante la partita.");
-        return;
-      }
       editPlayerSelectList.innerHTML = '';
       for (let i = 1; i <= GameState.numPlayers; i++) {
         const pName = getPlayerName(i);
@@ -1606,7 +1657,7 @@
         quantity < previousBid.quantity ||
         quantity === previousBid.quantity && face <= previousBid.face
       )) {
-        liarBidError.textContent = 'La puntata deve aumentare la quantità o, a parità di quantità, la faccia.';
+        liarBidError.textContent = 'La puntata deve aumentare la quantità o, a parità di quantità, la faccia del dado.';
         liarBidError.classList.remove('hidden');
         return false;
       }
@@ -1779,7 +1830,7 @@
         liarDiceStatus.textContent = 'Dadi scoperti: round completato.';
       } else {
         const winner = alivePlayers[0];
-        liarDiceStatus.textContent = winner ? `🏆 ${getPlayerName(winner)} ha vinto la partita con puntate!` : 'Partita terminata.';
+        liarDiceStatus.textContent = winner ? `🏆 ${getPlayerName(winner)} ha vinto la partita Liar's Dice!` : 'Partita terminata.';
       }
 
       if (GameState.liarCurrentBid) {
@@ -1832,7 +1883,7 @@
       if (hasResult && GameState.liarResult) {
         const result = GameState.liarResult;
         const loserName = getPlayerName(result.loserIndex);
-        liarDiceResultText.textContent = `Risultato: trovati ${result.actual} dadi (contando eventuali 1). Perde 1 dado ${loserName}!`;
+        liarDiceResultText.textContent = `Risultato: trovati ${result.actual} dadi (contando eventuali jolly). Perde 1 dado ${loserName}!`;
         Object.keys(result.hands || {}).forEach(index => {
           const handBadge = document.createElement('div');
           handBadge.className = 'rounded-lg bg-zinc-900 border border-zinc-800 px-3 py-1.5 text-xs';
@@ -1841,7 +1892,7 @@
         });
       } else if (GameState.liarPhase === 'finished') {
         const winner = alivePlayers[0];
-        liarDiceResultText.textContent = winner ? `🏆 ${getPlayerName(winner)} vince la partita con puntate!` : 'Partita terminata.';
+        liarDiceResultText.textContent = winner ? `🏆 ${getPlayerName(winner)} vince la partita Liar's Dice!` : 'Partita terminata.';
       } else {
         liarDiceResultText.textContent = '';
       }
@@ -2625,6 +2676,42 @@
       });
     }
 
+    function handleIncomingState(newState) {
+      if (newState.lastEvent && newState.lastEvent.id !== lastEventId) {
+        lastEventId = newState.lastEvent.id;
+        if (!isMyTurn()) {
+          showQuickToast(newState.lastEvent.type, newState.lastEvent.player);
+        }
+      }
+      
+      Object.assign(GameState, newState);
+      if (!GameState.chatLogs) GameState.chatLogs = [];
+      if (!GameState.inheritedRecords) GameState.inheritedRecords = {};
+      if (!GameState.liarDiceCounts) GameState.liarDiceCounts = {};
+      if (!GameState.liarHands) GameState.liarHands = {};
+      if (!GameState.liarOpeningRolls) GameState.liarOpeningRolls = {};
+      if (!Array.isArray(GameState.liarParticipants)) GameState.liarParticipants = [];
+      if (!Array.isArray(GameState.liarBets)) GameState.liarBets = [];
+      
+      renderChatHistory();
+
+      if (winModal && winModal.classList.contains('hidden') === false) {
+        // Logica originale non alterata
+      } else if (winModal) {
+        for (let i = 1; i <= GameState.numPlayers; i++) {
+          if (GameState.scores[i] >= TARGET_SCORE) {
+            if (winModal.classList.contains('hidden')) {
+              triggerVictory(i, GameState.scores[i]);
+            }
+            break;
+          }
+        }
+      }
+
+      initScoreboard();
+      updateUI();
+    }
+
     async function joinRoomProcess(name, code, targetScoreFromInput, isPageReload = false) {
       roomCode = code;
 
@@ -2747,40 +2834,22 @@
         roomModal.classList.add('hidden');
         roomBadge.textContent = `Stanza: ${roomCode}`;
 
-        supabaseClient.channel('room-sync-' + roomCode)
+        if (activeRoomChannel) {
+          supabaseClient.removeChannel(activeRoomChannel);
+        }
+        
+        activeRoomChannel = supabaseClient.channel('room-sync-' + roomCode);
+
+        // Ascolta sia i cambiamenti a lungo termine sul database, che i broadcast istantanei (per Liar's Dice UI refresh)
+        activeRoomChannel
           .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `code=eq.${roomCode}` }, payload => {
             if (payload.new && payload.new.state) {
-              const newState = payload.new.state;
-              if (newState.lastEvent && newState.lastEvent.id !== lastEventId) {
-                lastEventId = newState.lastEvent.id;
-                if (!isMyTurn()) {
-                  showQuickToast(newState.lastEvent.type, newState.lastEvent.player);
-                }
-              }
-              Object.assign(GameState, newState);
-              if (!GameState.chatLogs) GameState.chatLogs = [];
-              if (!GameState.inheritedRecords) GameState.inheritedRecords = {};
-              if (!GameState.liarDiceCounts) GameState.liarDiceCounts = {};
-              if (!GameState.liarHands) GameState.liarHands = {};
-              if (!GameState.liarOpeningRolls) GameState.liarOpeningRolls = {};
-              if (!Array.isArray(GameState.liarParticipants)) GameState.liarParticipants = [];
-              if (!Array.isArray(GameState.liarBets)) GameState.liarBets = [];
-              
-              renderChatHistory();
-
-              if (winModal && !winModal.classList.contains('hidden') === false) {
-                for (let i = 1; i <= GameState.numPlayers; i++) {
-                  if (GameState.scores[i] >= TARGET_SCORE) {
-                    if (winModal.classList.contains('hidden')) {
-                      triggerVictory(i, GameState.scores[i]);
-                    }
-                    break;
-                  }
-                }
-              }
-
-              initScoreboard();
-              updateUI();
+              handleIncomingState(payload.new.state);
+            }
+          })
+          .on('broadcast', { event: 'state_sync' }, payload => {
+            if (payload && payload.state) {
+              handleIncomingState(payload.state);
             }
           })
           .subscribe();
@@ -3019,9 +3088,7 @@
       btnCloseLeaderboard.addEventListener('click', () => { triggerHaptic(20); leaderboardModal.classList.add('hidden'); });
       btnRules.addEventListener('click', () => {
         triggerHaptic(20);
-        scaleModeRules.classList.toggle('hidden', GameState.mode !== 'with-scales');
-        liarDiceRules.classList.toggle('hidden', GameState.mode !== 'liars-dice');
-        rulesModal.classList.remove('hidden');
+        showRules(GameState.mode);
       });
       btnCloseRules.addEventListener('click', () => { triggerHaptic(20); rulesModal.classList.add('hidden'); });
       btnGotItRules.addEventListener('click', () => { triggerHaptic(20); rulesModal.classList.add('hidden'); });
