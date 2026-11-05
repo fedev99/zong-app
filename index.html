@@ -1641,11 +1641,7 @@
 
       const allRolled = GameState.liarParticipants.every(index => Array.isArray(GameState.liarHands[index]));
       if (allRolled) {
-        if ((GameState.liarRound || 1) === 1 && GameState.liarParticipants.length > 0) {
-          const highestOpeningRoll = Math.max(...GameState.liarParticipants.map(index => GameState.liarOpeningRolls[index]));
-          const firstPlayers = GameState.liarParticipants.filter(index => GameState.liarOpeningRolls[index] === highestOpeningRoll);
-          GameState.liarStarter = firstPlayers[Math.floor(Math.random() * firstPlayers.length)];
-        }
+        // Usa semplicemente l'ordine casuale già estratto da startNewGame (liarStarter è il primo)
         GameState.liarPhase = 'bidding';
         GameState.activePlayer = GameState.liarStarter;
       } else {
@@ -1966,7 +1962,6 @@
       btnOpenLiarBid.classList.toggle('hidden', !isMyBid || !liarBidModal.classList.contains('hidden'));
       btnCallLiar.classList.toggle('hidden', !GameState.liarCurrentBid || !isMyBid);
       
-      // LOGICA MODALE AUTOMATICA CORRETTA E POTENZIATA (Richieste 2 e 3)
       if (!isMyBid) {
         liarBidModal.classList.add('hidden');
         activeLiarBidModalKey = null;
@@ -2049,14 +2044,35 @@
       liarDiceArea.classList.toggle('hidden', !isLiarsDice);
       
       if (isLiarsDice) {
+        // Chiudi la modale di vittoria se la partita ricomincia per tutti
+        if (GameState.liarPhase === 'finished') {
+          if (winModal && winModal.classList.contains('hidden')) {
+            const alivePlayers = getLiarAlivePlayers();
+            const winner = alivePlayers.length > 0 ? alivePlayers[0] : GameState.activePlayer;
+            triggerLiarVictory(winner);
+          }
+        } else if (winModal && !winModal.classList.contains('hidden')) {
+          winModal.classList.add('hidden');
+        }
+        
         renderLiarDiceUI();
         renderLiarLeaderboard(); 
-        if (GameState.liarPhase === 'finished' && winModal.classList.contains('hidden')) {
-          const alivePlayers = getLiarAlivePlayers();
-          const winner = alivePlayers.length > 0 ? alivePlayers[0] : GameState.activePlayer;
-          triggerLiarVictory(winner);
-        }
         return;
+      }
+
+      // PER ZONG NORMALE E SCALE: rimuove finestra vittoria se la partita ricomincia
+      let hasWinner = false;
+      for (let i = 1; i <= GameState.numPlayers; i++) {
+        if (GameState.scores[i] >= TARGET_SCORE) {
+          hasWinner = true;
+          if (winModal && winModal.classList.contains('hidden')) {
+            triggerVictory(i, GameState.scores[i]);
+          }
+          break;
+        }
+      }
+      if (!hasWinner && winModal && !winModal.classList.contains('hidden')) {
+        winModal.classList.add('hidden');
       }
 
       renderLogs();
@@ -2843,20 +2859,6 @@
       if (!Array.isArray(GameState.liarBets)) GameState.liarBets = [];
       
       renderChatHistory();
-
-      if (winModal && winModal.classList.contains('hidden') === false) {
-        // Logica originale non alterata
-      } else if (winModal) {
-        for (let i = 1; i <= GameState.numPlayers; i++) {
-          if (GameState.scores[i] >= TARGET_SCORE) {
-            if (winModal.classList.contains('hidden')) {
-              triggerVictory(i, GameState.scores[i]);
-            }
-            break;
-          }
-        }
-      }
-
       initScoreboard();
       updateUI();
     }
@@ -3003,7 +3005,6 @@
             }
           })
           .subscribe((status) => {
-             // FORZA L'AGGIORNAMENTO A TUTTI GLI ALTRI APPENA ENTRA UN NUOVO GIOCATORE
              if (status === 'SUBSCRIBED') {
                  setTimeout(() => {
                    if (roomCode) saveStateToCloud();
@@ -3156,7 +3157,6 @@
         makeLiarBid(Number(liarBidQuantity.value), Number(liarBidFace.value));
       });
       
-      // Nuovo listener per l'aggiornamento dinamico delle tendine quando l'utente cambia la quantità
       const qSelect = document.getElementById('liarBidQuantity');
       if(qSelect) {
         qSelect.addEventListener('change', () => updateLiarBidDropdowns(false));
