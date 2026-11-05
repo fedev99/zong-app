@@ -597,6 +597,18 @@
       <!-- CONTENITORE DINAMICO GIOCATORI E DADI -->
       <div id="liarBidModalPlayers" class="flex flex-wrap gap-2 text-xs mb-2"></div>
 
+      <!-- I Dadi del giocatore stesso -->
+      <div id="liarBidMyDiceContainer" class="mb-2 p-3 bg-purple-900/30 border border-purple-500/50 rounded-xl text-center shadow-inner hidden">
+        <span class="text-[10px] uppercase font-bold text-purple-300 block mb-1">I tuoi dadi attuali:</span>
+        <div id="liarBidMyDiceText" class="text-lg font-black text-white tracking-widest font-display"></div>
+      </div>
+
+      <!-- NUOVO CONTENITORE: Ultima Puntata (Richiesta 3) -->
+      <div id="liarBidPreviousBidContainer" class="hidden mb-4 p-3 bg-amber-950/40 border border-amber-500/50 rounded-xl text-center shadow-inner">
+        <span class="text-[10px] uppercase font-bold text-amber-500 block mb-1">Ultima puntata sul tavolo:</span>
+        <div id="liarBidPreviousBidText" class="text-sm font-black text-amber-300"></div>
+      </div>
+
       <p class="text-[11px] text-zinc-400 leading-tight">Dichiara quanti dadi di una determinata faccia pensi siano presenti complessivamente sul tavolo.</p>
       
       <form id="liarBidForm" class="space-y-4">
@@ -800,8 +812,6 @@
       const clonedState = JSON.parse(JSON.stringify(GameState));
       writeQueue.push({ roomCode: roomCode, statePayload: clonedState });
       
-      // BROADCAST ISTANTANEO: Aggiorna l'UI di tutti gli altri client in modo immediato per bypassare
-      // qualsiasi latenza o accodamento di scrittura sul DB. Evita la necessità di aggiornare manualmente.
       if (activeRoomChannel) {
         activeRoomChannel.send({
           type: 'broadcast',
@@ -1023,9 +1033,6 @@
       chatLogs: [],
       lastEvent: null
     };
-
-
-
 
     function showRules(gameMode) {
       const ruleSections = {
@@ -1941,7 +1948,7 @@
       if (hasResult && GameState.liarResult) {
         const result = GameState.liarResult;
         const loserName = getPlayerName(result.loserIndex);
-        liarDiceResultText.textContent = `Risultato: trovati ${result.actual} dadi (contando eventuali jolly). Perde 1 dado ${loserName}!`;
+        liarDiceResultText.textContent = `Risultato: trovati ${result.actual} dadi (contando gli 1 come jolly). Perde 1 dado ${loserName}!`;
         Object.keys(result.hands || {}).forEach(index => {
           const handBadge = document.createElement('div');
           handBadge.className = 'rounded-lg bg-zinc-900 border border-zinc-800 px-3 py-1.5 text-xs';
@@ -1959,35 +1966,63 @@
       btnOpenLiarBid.classList.toggle('hidden', !isMyBid || !liarBidModal.classList.contains('hidden'));
       btnCallLiar.classList.toggle('hidden', !GameState.liarCurrentBid || !isMyBid);
       
+      // LOGICA MODALE AUTOMATICA CORRETTA E POTENZIATA (Richieste 2 e 3)
       if (!isMyBid) {
         liarBidModal.classList.add('hidden');
         activeLiarBidModalKey = null;
-      } else if (activeLiarBidModalKey !== myTurnKey && dismissedLiarBidModalKey !== myTurnKey) {
-        activeLiarBidModalKey = myTurnKey;
-        dismissedLiarBidModalKey = null;
-        
-        const modalPlayersContainer = document.getElementById('liarBidModalPlayers');
-        if (modalPlayersContainer) {
-          modalPlayersContainer.innerHTML = '';
-          for (let i = 1; i <= GameState.numPlayers; i++) {
-            const diceCount = GameState.liarDiceCounts[i] || 0;
-            if (diceCount > 0) {
-              const span = document.createElement('span');
-              span.className = 'px-2 py-1 rounded-md bg-zinc-950 border border-zinc-800 flex items-center gap-1.5';
-              span.innerHTML = `<span class="font-bold truncate max-w-[80px]" style="color: ${PLAYER_COLORS[(i-1)%PLAYER_COLORS.length]}">${getPlayerName(i)}</span> <span class="text-white font-black">${diceCount}🎲</span>`;
-              modalPlayersContainer.appendChild(span);
+      } else {
+        if (dismissedLiarBidModalKey !== myTurnKey) {
+          activeLiarBidModalKey = myTurnKey;
+          
+          const modalPlayersContainer = document.getElementById('liarBidModalPlayers');
+          if (modalPlayersContainer) {
+            modalPlayersContainer.innerHTML = '';
+            for (let i = 1; i <= GameState.numPlayers; i++) {
+              const diceCount = GameState.liarDiceCounts[i] || 0;
+              if (diceCount > 0) {
+                const span = document.createElement('span');
+                span.className = 'px-2 py-1 rounded-md bg-zinc-950 border border-zinc-800 flex items-center gap-1.5';
+                span.innerHTML = `<span class="font-bold truncate max-w-[80px]" style="color: ${PLAYER_COLORS[(i-1)%PLAYER_COLORS.length]}">${getPlayerName(i)}</span> <span class="text-white font-black">${diceCount}🎲</span>`;
+                modalPlayersContainer.appendChild(span);
+              }
             }
           }
-        }
 
-        const btnModalCallLiar = document.getElementById('btnModalCallLiar');
-        if (btnModalCallLiar) {
-          btnModalCallLiar.classList.toggle('hidden', !GameState.liarCurrentBid);
-        }
+          const btnModalCallLiar = document.getElementById('btnModalCallLiar');
+          if (btnModalCallLiar) {
+            btnModalCallLiar.classList.toggle('hidden', !GameState.liarCurrentBid);
+          }
 
-        liarBidError.classList.add('hidden');
-        updateLiarBidDropdowns(true);
-        liarBidModal.classList.remove('hidden');
+          const liarBidMyDiceContainer = document.getElementById('liarBidMyDiceContainer');
+          const liarBidMyDiceText = document.getElementById('liarBidMyDiceText');
+          if (liarBidMyDiceContainer && liarBidMyDiceText) {
+            if (Array.isArray(myHand) && myHand.length > 0) {
+              liarBidMyDiceText.textContent = '[ ' + myHand.join('  ,  ') + ' ]';
+              liarBidMyDiceContainer.classList.remove('hidden');
+            } else {
+              liarBidMyDiceContainer.classList.add('hidden');
+            }
+          }
+
+          // Aggiunge la vista testuale dell'ultima puntata per chi apre la modale
+          const prevBidContainer = document.getElementById('liarBidPreviousBidContainer');
+          const prevBidText = document.getElementById('liarBidPreviousBidText');
+          if (prevBidContainer && prevBidText) {
+             if (GameState.liarCurrentBid) {
+                 const b = GameState.liarCurrentBid;
+                 prevBidText.textContent = `${b.quantity} dado/i di faccia ${b.face} (da ${getPlayerName(b.playerIndex)})`;
+                 prevBidContainer.classList.remove('hidden');
+             } else {
+                 prevBidContainer.classList.add('hidden');
+             }
+          }
+
+          if (liarBidModal.classList.contains('hidden')) {
+            liarBidError.classList.add('hidden');
+            updateLiarBidDropdowns(true);
+            liarBidModal.classList.remove('hidden');
+          }
+        }
       }
     }
 
@@ -2012,9 +2047,15 @@
 
       zongGameArea.classList.toggle('hidden', isLiarsDice);
       liarDiceArea.classList.toggle('hidden', !isLiarsDice);
+      
       if (isLiarsDice) {
         renderLiarDiceUI();
         renderLiarLeaderboard(); 
+        if (GameState.liarPhase === 'finished' && winModal.classList.contains('hidden')) {
+          const alivePlayers = getLiarAlivePlayers();
+          const winner = alivePlayers.length > 0 ? alivePlayers[0] : GameState.activePlayer;
+          triggerLiarVictory(winner);
+        }
         return;
       }
 
@@ -2602,6 +2643,39 @@
       winModal.classList.remove('hidden');
     }
 
+    function triggerLiarVictory(winnerIndex) {
+      sound.playVictory();
+      triggerHaptic([100, 50, 100, 50, 200]);
+
+      document.getElementById('winnerTitle').textContent = "VITTORIA!";
+      document.getElementById('winnerSubtitle').textContent = `${getPlayerName(winnerIndex)} ha vinto a Liar's Dice!`;
+
+      if (winLeaderboardContainer) {
+        winLeaderboardContainer.innerHTML = '';
+        const list = [];
+        for (let i = 1; i <= GameState.numPlayers; i++) {
+          list.push({ id: i, dice: GameState.liarDiceCounts[i] || 0 });
+        }
+        list.sort((a, b) => b.dice - a.dice);
+
+        list.forEach((p, idx) => {
+          const playerColor = PLAYER_COLORS[(p.id - 1) % PLAYER_COLORS.length];
+          const isMe = GameState.playerIds[p.id] === myPlayerId;
+          const row = document.createElement('div');
+          row.className = `flex items-center justify-between p-2 rounded-xl border ${isMe ? 'bg-purple-500/20 border-purple-500/50' : 'bg-zinc-950 border-zinc-800'}`;
+          row.innerHTML = `
+            <div class="flex items-center gap-2">
+              <span class="w-5 h-5 rounded-full flex items-center justify-center bg-zinc-800 text-xs font-bold">${idx + 1}</span>
+              <span class="text-xs font-bold" style="color: ${playerColor}">${getPlayerName(p.id)} ${isMe ? '(Tu)' : ''}</span>
+            </div>
+            <span class="text-xs font-black text-white">${p.dice > 0 ? p.dice + ' dadi' : 'Eliminato ❌'}</span>
+          `;
+          winLeaderboardContainer.appendChild(row);
+        });
+      }
+      winModal.classList.remove('hidden');
+    }
+
     function onDiceClick(index) {
       if (!isMyTurn() || GameState.phase !== 'rolled') return;
       const d = GameState.dice[index];
@@ -2915,7 +2989,6 @@
         
         activeRoomChannel = supabaseClient.channel('room-sync-' + roomCode);
 
-        // Ascolta sia i cambiamenti a lungo termine sul database, che i broadcast istantanei (per Liar's Dice UI refresh)
         activeRoomChannel
           .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `code=eq.${roomCode}` }, payload => {
             if (payload.new && payload.new.state) {
@@ -2923,15 +2996,25 @@
             }
           })
           .on('broadcast', { event: 'state_sync' }, payload => {
-            if (payload && payload.state) {
+            if (payload && payload.payload && payload.payload.state) {
+              handleIncomingState(payload.payload.state);
+            } else if (payload && payload.state) {
               handleIncomingState(payload.state);
             }
           })
-          .subscribe();
+          .subscribe((status) => {
+             // FORZA L'AGGIORNAMENTO A TUTTI GLI ALTRI APPENA ENTRA UN NUOVO GIOCATORE
+             if (status === 'SUBSCRIBED') {
+                 setTimeout(() => {
+                   if (roomCode) saveStateToCloud();
+                 }, 200);
+             }
+          });
 
         renderChatHistory();
         initScoreboard();
         updateUI();
+
         return true;
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : String(err);
@@ -3079,7 +3162,6 @@
         qSelect.addEventListener('change', () => updateLiarBidDropdowns(false));
       }
 
-      // Collega il nuovo pulsante Dubita interno alla modale
       const btnModalCallLiar = document.getElementById('btnModalCallLiar');
       if (btnModalCallLiar) {
         btnModalCallLiar.addEventListener('click', () => {
@@ -3100,8 +3182,8 @@
       
       btnOpenLiarBid.addEventListener('click', () => {
         if (GameState.liarPhase === 'bidding' && isMyTurn()) {
-          dismissedLiarBidModalKey = null; // Resetta la chiusura forzata
-          updateUI(); // Passa attraverso la normale logica che aprirà la modale e popolerà i dati aggiornati
+          dismissedLiarBidModalKey = null; 
+          updateUI(); 
         }
       });
       
