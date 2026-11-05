@@ -352,7 +352,7 @@
   <!-- Main Game Area -->
   <main class="w-full max-w-5xl mx-auto flex-1 flex flex-col gap-3 sm:gap-5 justify-center py-2">
 
-    <!-- SEZIONE MODALITÀ LIAR'S DICE CORRETTA CON TAVOLO IN FELTRO E DADI 3D COERENTI -->
+    <!-- SEZIONE MODALITÀ LIAR'S DICE -->
     <section id="liarDiceArea" class="hidden rounded-3xl bg-zinc-900/90 border border-purple-500/30 p-4 sm:p-6 space-y-4 shadow-xl">
       <div class="flex items-start justify-between gap-3 border-b border-zinc-800 pb-3">
         <div>
@@ -593,24 +593,28 @@
           <i data-lucide="x" class="w-4 h-4"></i>
         </button>
       </div>
-      <p class="text-xs text-zinc-400">Dichiara quanti dadi di una determinata faccia pensi siano presenti complessivamente sul tavolo tra tutti i giocatori.</p>
+      
+      <!-- CONTENITORE DINAMICO GIOCATORI E DADI -->
+      <div id="liarBidModalPlayers" class="flex flex-wrap gap-2 text-xs mb-2"></div>
+
+      <p class="text-[11px] text-zinc-400 leading-tight">Dichiara quanti dadi di una determinata faccia pensi siano presenti complessivamente sul tavolo.</p>
       
       <form id="liarBidForm" class="space-y-4">
-        <div>
-          <label class="block text-[11px] uppercase font-bold text-zinc-400 mb-1">Numero totale di dadi</label>
-          <input id="liarBidQuantity" type="number" min="1" step="1" required class="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-2.5 text-white text-base font-bold focus:outline-none focus:border-purple-400">
-        </div>
-        <div>
-          <label class="block text-[11px] uppercase font-bold text-zinc-400 mb-1">Faccia del dado (1 a 6)</label>
-          <select id="liarBidFace" class="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-2.5 text-white text-base font-bold focus:outline-none focus:border-purple-400">
-            <option value="1">1</option><option value="2">2</option><option value="3">3</option>
-            <option value="4">4</option><option value="5">5</option><option value="6">6</option>
-          </select>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[10px] uppercase font-bold text-zinc-400 mb-1">Numero Dadi</label>
+            <select id="liarBidQuantity" required class="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-2.5 text-white text-base font-bold focus:outline-none focus:border-purple-400"></select>
+          </div>
+          <div>
+            <label class="block text-[10px] uppercase font-bold text-zinc-400 mb-1">Faccia (1-6)</label>
+            <select id="liarBidFace" required class="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-2.5 text-white text-base font-bold focus:outline-none focus:border-purple-400"></select>
+          </div>
         </div>
         <p id="liarBidError" class="hidden text-xs text-red-400 font-semibold bg-red-950/40 p-2 rounded-lg border border-red-500/30"></p>
         
         <div class="space-y-2 pt-2">
           <button type="submit" class="w-full py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-black text-sm shadow-lg transition">Conferma Puntata</button>
+          <button type="button" id="btnModalCallLiar" class="w-full py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-black text-sm shadow-lg transition hidden">DUBITO! 🕵️‍♂️</button>
         </div>
       </form>
     </div>
@@ -1761,6 +1765,60 @@
       if (window.lucide) lucide.createIcons();
     }
 
+    function updateLiarBidDropdowns(isInit = false) {
+      const qSelect = document.getElementById('liarBidQuantity');
+      const fSelect = document.getElementById('liarBidFace');
+      if (!qSelect || !fSelect) return;
+
+      const currentBid = GameState.liarCurrentBid;
+      let totalDice = 0;
+      for (let i = 1; i <= GameState.numPlayers; i++) {
+        totalDice += (GameState.liarDiceCounts[i] || 0);
+      }
+
+      // 1. Logica Quantità
+      let minQ = 1;
+      if (currentBid) {
+        minQ = currentBid.quantity;
+        if (currentBid.face === 6) minQ++; // Se l'ultima puntata era un 6, si deve obbligatoriamente alzare la quantità
+      }
+
+      if (isInit) {
+        qSelect.innerHTML = '';
+        for (let i = minQ; i <= totalDice; i++) {
+          const opt = document.createElement('option');
+          opt.value = i;
+          opt.textContent = i;
+          qSelect.appendChild(opt);
+        }
+        qSelect.value = minQ; 
+      }
+
+      const selectedQ = parseInt(qSelect.value) || minQ;
+
+      // 2. Logica Faccia
+      let minFace = 1;
+      if (currentBid && selectedQ === currentBid.quantity) {
+        minFace = currentBid.face + 1; // A parità di quantità, la faccia deve essere maggiore
+      }
+
+      const prevFace = parseInt(fSelect.value);
+      fSelect.innerHTML = '';
+      for (let i = minFace; i <= 6; i++) {
+        const opt = document.createElement('option');
+        opt.value = i;
+        opt.textContent = i;
+        fSelect.appendChild(opt);
+      }
+
+      if (isInit) {
+        fSelect.value = minFace;
+      } else {
+        if (prevFace >= minFace && prevFace <= 6) fSelect.value = prevFace;
+        else fSelect.value = minFace;
+      }
+    }
+
     function renderLiarDiceUI() {
       const myIndex = getLiarPlayerIndex();
       const myHand = GameState.liarHands && GameState.liarHands[myIndex];
@@ -1768,7 +1826,7 @@
       const participants = Array.isArray(GameState.liarParticipants) ? GameState.liarParticipants : [];
       const isParticipant = participants.includes(myIndex);
       const isMyBid = GameState.liarPhase === 'bidding' && isMyTurn();
-      const myTurnKey = `${GameState.liarRound || 1}:${GameState.activePlayer}`;
+      const myTurnKey = `${GameState.liarRound || 1}:${GameState.activePlayer}:${(GameState.liarBets || []).length}`;
       const canRoll = GameState.liarPhase === 'roll' && myIndex > 0 && alivePlayers.length >= 2 &&
         myIndex === GameState.activePlayer &&
         (participants.length === 0 || isParticipant && !Array.isArray(myHand));
@@ -1904,14 +1962,31 @@
       if (!isMyBid) {
         liarBidModal.classList.add('hidden');
         activeLiarBidModalKey = null;
-      } else if (activeLiarBidModalKey !== myTurnKey) {
+      } else if (activeLiarBidModalKey !== myTurnKey && dismissedLiarBidModalKey !== myTurnKey) {
         activeLiarBidModalKey = myTurnKey;
         dismissedLiarBidModalKey = null;
         
-        liarBidQuantity.value = GameState.liarCurrentBid ? GameState.liarCurrentBid.quantity + 1 : '1';
-        liarBidFace.value = GameState.liarCurrentBid ? String(GameState.liarCurrentBid.face) : '2';
+        const modalPlayersContainer = document.getElementById('liarBidModalPlayers');
+        if (modalPlayersContainer) {
+          modalPlayersContainer.innerHTML = '';
+          for (let i = 1; i <= GameState.numPlayers; i++) {
+            const diceCount = GameState.liarDiceCounts[i] || 0;
+            if (diceCount > 0) {
+              const span = document.createElement('span');
+              span.className = 'px-2 py-1 rounded-md bg-zinc-950 border border-zinc-800 flex items-center gap-1.5';
+              span.innerHTML = `<span class="font-bold truncate max-w-[80px]" style="color: ${PLAYER_COLORS[(i-1)%PLAYER_COLORS.length]}">${getPlayerName(i)}</span> <span class="text-white font-black">${diceCount}🎲</span>`;
+              modalPlayersContainer.appendChild(span);
+            }
+          }
+        }
+
+        const btnModalCallLiar = document.getElementById('btnModalCallLiar');
+        if (btnModalCallLiar) {
+          btnModalCallLiar.classList.toggle('hidden', !GameState.liarCurrentBid);
+        }
+
         liarBidError.classList.add('hidden');
-        
+        updateLiarBidDropdowns(true);
         liarBidModal.classList.remove('hidden');
       }
     }
@@ -2984,30 +3059,52 @@
       btnRoll.addEventListener('click', () => { if (isMyTurn()) triggerHaptic(20); sound.init(); rollDice(); });
       btnBank.addEventListener('click', () => { if (isMyTurn()) triggerHaptic(20); bankPoints(); });
       btnSplit5s.addEventListener('click', () => { if (isMyTurn()) triggerHaptic(20); processSplitFives(); });
+      
       btnRollLiarDice.addEventListener('click', () => {
         if (GameState.liarPhase === 'roll') {
           triggerHaptic(30);
           rollLiarDice();
         }
       });
+      
       liarBidForm.addEventListener('submit', event => {
         event.preventDefault();
         triggerHaptic(25);
         makeLiarBid(Number(liarBidQuantity.value), Number(liarBidFace.value));
       });
+      
+      // Nuovo listener per l'aggiornamento dinamico delle tendine quando l'utente cambia la quantità
+      const qSelect = document.getElementById('liarBidQuantity');
+      if(qSelect) {
+        qSelect.addEventListener('change', () => updateLiarBidDropdowns(false));
+      }
+
+      // Collega il nuovo pulsante Dubita interno alla modale
+      const btnModalCallLiar = document.getElementById('btnModalCallLiar');
+      if (btnModalCallLiar) {
+        btnModalCallLiar.addEventListener('click', () => {
+          triggerHaptic(40);
+          callLiar();
+        });
+      }
+
       btnCallLiar.addEventListener('click', () => {
         triggerHaptic(40);
         callLiar();
       });
+      
       btnContinueLiarRound.addEventListener('click', () => {
         triggerHaptic(25);
         startNextLiarRound();
       });
+      
       btnOpenLiarBid.addEventListener('click', () => {
         if (GameState.liarPhase === 'bidding' && isMyTurn()) {
-          liarBidModal.classList.remove('hidden');
+          dismissedLiarBidModalKey = null; // Resetta la chiusura forzata
+          updateUI(); // Passa attraverso la normale logica che aprirà la modale e popolerà i dati aggiornati
         }
       });
+      
       btnCloseLiarBid.addEventListener('click', () => {
         dismissedLiarBidModalKey = activeLiarBidModalKey;
         liarBidModal.classList.add('hidden');
